@@ -11,11 +11,13 @@ const NAV = [
   { href: '/admin', label: 'Resumen', icon: 'grid' },
   { href: '/admin/regalos', label: 'Catálogo de regalos', icon: 'gift' },
   { href: '/admin/decoracion', label: 'Decoración', icon: 'flower' },
-  { href: '/admin/solicitudes', label: 'Solicitudes', icon: 'inbox', badge: true },
+  { href: '/admin/solicitudes', label: 'Solicitudes', icon: 'inbox', badge: 'solicitudes' },
   { href: '/admin/parejas', label: 'Parejas', icon: 'rings' },
+  { href: '/admin/aniversarios', label: 'Aniversarios', icon: 'calendar', badge: 'aniversarios' },
 ]
 
-export default function AdminShell({ email, solicitudesNuevas, miBoda, children }) {
+export default function AdminShell({ email, solicitudesNuevas, aniversariosPendientes = 0, miBoda, children }) {
+  const badges = { solicitudes: solicitudesNuevas, aniversarios: aniversariosPendientes }
   const pathname = usePathname()
   const router = useRouter()
   const [abierto, setAbierto] = useState(false)
@@ -41,8 +43,8 @@ export default function AdminShell({ email, solicitudesNuevas, miBoda, children 
           >
             <Icon name={item.icon} className="h-[18px] w-[18px]" />
             <span className="flex-1">{item.label}</span>
-            {item.badge && solicitudesNuevas > 0 && (
-              <span className="rounded-full bg-terracota px-2 py-0.5 text-[11px] font-semibold text-white">{solicitudesNuevas}</span>
+            {item.badge && badges[item.badge] > 0 && (
+              <span className="rounded-full bg-terracota px-2 py-0.5 text-[11px] font-semibold text-white">{badges[item.badge]}</span>
             )}
           </Link>
         )

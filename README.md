@@ -25,6 +25,7 @@ base de datos separada.
    8. `supabase/migracion_07_decoracion_y_regalos.sql` — paso de decoración (sí/no), regalos con cantidad y regalos compartidos
    9. `supabase/migracion_08_avisos_y_plazos.sql` — fecha límite para confirmar, novedades, recordatorios y agradecimientos
    10. `supabase/migracion_09_portada_propia.sql` — foto de portada propia de los novios
+   11. `supabase/migracion_10_aniversarios.sql` — bitácora de aniversarios de tus clientes
 3. En **Authentication → Providers**, confirma que "Email" esté habilitado.
    Si quieres saltarte la confirmación por correo mientras pruebas, en
    **Authentication → Settings** puedes desactivar "Confirm email"
@@ -141,6 +142,14 @@ Supabase → Table Editor. Las solicitudes que envían los novios desde su panel
 llegan a `decor_requests`; ahí puedes cambiar `status` a `cotizada`,
 `aceptada` o `descartada` y los novios lo verán en su panel. El número de
 WhatsApp para cotizar está en `lib/escenarios.js` (`WHATSAPP_NOVIOS`).
+
+## Aniversarios (recuerdos para tus clientes)
+
+En **/admin/aniversarios** llevas la bitácora de las parejas que confiaron en Cherry Bloom Studio.
+
+- **Se llena sola:** cuando marcas una solicitud de decoración como *Aceptada*, la pareja entra con su fecha de boda, WhatsApp, correo y lo que se decoró. También puedes agregar clientes a mano (bodas antiguas o fuera de la plataforma).
+- **Recordatorio 15 días antes:** el menú muestra un contador en *Aniversarios* y la página lista "Toca preparar estos recuerdos". Además, el botón **Calendario** descarga un evento anual con alarmas 15 días y 1 día antes (ábrelo en tu celular y se guarda en Google Calendar / iPhone).
+- **Historial:** al marcar un recuerdo como enviado queda registrado qué se regaló cada año, para no repetir.
 
 ## Avisos automáticos por WhatsApp (opcional)
 

@@ -34,10 +34,14 @@ export default async function AdminLayout({ children }) {
     .select('id', { count: 'exact', head: true })
     .eq('status', 'nueva')
 
+  // Recuerdos de aniversario que toca preparar (15 días o menos y aún no enviados)
+  const { data: aniversarios } = await supabase.rpc('admin_aniversarios')
+  const aniversariosPendientes = (aniversarios || []).filter((a) => a.activo && a.dias <= 15 && !a.enviado_este).length
+
   const { data: miBoda } = await supabase.from('couples').select('slug').eq('user_id', user.id).maybeSingle()
 
   return (
-    <AdminShell email={user.email} solicitudesNuevas={nuevas || 0} miBoda={miBoda?.slug || null}>
+    <AdminShell email={user.email} solicitudesNuevas={nuevas || 0} aniversariosPendientes={aniversariosPendientes} miBoda={miBoda?.slug || null}>
       {children}
     </AdminShell>
   )
