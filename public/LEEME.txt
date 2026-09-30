@@ -1,0 +1,3 @@
+Copia aquí el archivo custom-logo.jpg desde tu proyecto Cherry-Bloom-Studio-Web
+(está en Cherry-Bloom-Studio-Web-main/public/custom-logo.jpg) para que el logo
+se vea en el header de este sitio. Puedes borrar este archivo después.
