@@ -1,10 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Icon from '@/components/Icon'
 import { createClient } from '@/lib/supabase/client'
 import { Badge, Confirm, PageHeader, SearchInput, StatCard, fechaCorta, useToast } from '@/components/admin/ui'
+
+function generarClave() {
+  const letras = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  const arr = new Uint32Array(10)
+  crypto.getRandomValues(arr)
+  return 'Cb-' + Array.from(arr, (n) => letras[n % letras.length]).join('')
+}
 
 const FILTROS = [
   ['todas', 'Todas las cuentas'],
@@ -32,6 +39,10 @@ export default function UsuariosAdmin({ usuarios, admins, miId, error }) {
   const [confirmar, setConfirmar] = useState(null) // { titulo, mensaje, etiqueta, peligro, accion }
   const [procesando, setProcesando] = useState(false)
   const [nuevoAdmin, setNuevoAdmin] = useState('')
+  const [modo, setModo] = useState('crear') // 'crear' cuenta nueva | 'existente' ya tiene cuenta
+  const [clave, setClave] = useState('')
+  useEffect(() => setClave(generarClave()), []) // solo en el navegador (evita diferencias con el servidor)
+  const [creado, setCreado] = useState(null) // { email, clave }
 
   const supabase = createClient()
 
@@ -104,9 +115,23 @@ export default function UsuariosAdmin({ usuarios, admins, miId, error }) {
   async function agregarAdmin(e) {
     e.preventDefault()
     if (!nuevoAdmin.trim()) return
-    const ok = await ejecutar('admin_agregar_admin', { p_email: nuevoAdmin }, 'Administrador agregado')
-    if (ok) setNuevoAdmin('')
+    if (modo === 'crear') {
+      const email = nuevoAdmin.trim().toLowerCase()
+      const ok = await ejecutar('admin_crear_admin', { p_email: email, p_password: clave }, 'Cuenta de administrador creada')
+      if (ok) {
+        setCreado({ email, clave })
+        setNuevoAdmin('')
+        setClave(generarClave())
+      }
+    } else {
+      const ok = await ejecutar('admin_agregar_admin', { p_email: nuevoAdmin }, 'Administrador agregado')
+      if (ok) setNuevoAdmin('')
+    }
   }
+
+  const textoAcceso = creado
+    ? `Hola, te di acceso al panel de administración de Cherry Bloom Studio Novios.\n\nEntra en: ${typeof window !== 'undefined' ? window.location.origin : ''}/login\nCorreo: ${creado.email}\nContraseña temporal: ${creado.clave}\n\nAl entrar, cámbiala en "Cambiar contraseña" (abajo a la izquierda).`
+    : ''
 
   const miEmail = usuarios.find((u) => u.id === miId)?.email?.toLowerCase()
 
@@ -297,26 +322,95 @@ export default function UsuariosAdmin({ usuarios, admins, miId, error }) {
             </ul>
           </div>
 
-          <form onSubmit={agregarAdmin} className="h-fit rounded-2xl border border-arena-200 bg-white p-5">
-            <h3 className="font-serif text-xl font-semibold text-cacao">Agregar administrador</h3>
-            <p className="mt-1 text-sm leading-relaxed text-cacao-700">
-              Tendrá acceso completo a este panel: catálogo, decoración, solicitudes, parejas, aniversarios y usuarios.
-            </p>
-            <input
-              type="email"
-              value={nuevoAdmin}
-              onChange={(e) => setNuevoAdmin(e.target.value)}
-              placeholder="correo@ejemplo.com"
-              className="campo mt-4 bg-white"
-              required
-            />
-            <button type="submit" disabled={procesando} className="btn-primario btn-sm mt-3 w-full">
-              <Icon name="plus" className="h-4 w-4" /> Agregar
-            </button>
-            <p className="mt-3 text-[11px] leading-relaxed text-cacao-500">
-              Si esa persona aún no tiene cuenta, pídele que se registre con ese mismo correo. Al iniciar sesión entrará directo a /admin.
-            </p>
-          </form>
+          <div className="h-fit space-y-4">
+            {creado && (
+              <div className="rounded-2xl border border-salvia/40 bg-salvia-100 p-5">
+                <h3 className="font-serif text-lg font-semibold text-cacao">Cuenta creada</h3>
+                <p className="mt-1 text-sm text-cacao-700">Envíale estos datos. Esta contraseña no se volverá a mostrar.</p>
+                <dl className="mt-3 space-y-1 rounded-xl bg-white p-3 text-sm">
+                  <div className="flex justify-between gap-3"><dt className="text-cacao-500">Correo</dt><dd className="font-medium text-cacao">{creado.email}</dd></div>
+                  <div className="flex justify-between gap-3"><dt className="text-cacao-500">Contraseña</dt><dd className="font-mono font-medium text-cacao">{creado.clave}</dd></div>
+                </dl>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(textoAcceso).then(() => toast?.('Copiado'))}
+                    className="btn-claro btn-sm bg-white"
+                  >
+                    <Icon name="copy" className="h-4 w-4" /> Copiar mensaje
+                  </button>
+                  <a href={`https://wa.me/?text=${encodeURIComponent(textoAcceso)}`} target="_blank" className="btn-claro btn-sm bg-white">
+                    <Icon name="chat" className="h-4 w-4" /> Enviar por WhatsApp
+                  </a>
+                  <button type="button" onClick={() => setCreado(null)} className="btn-sm px-3 text-xs text-cacao-500 hover:text-cacao">
+                    Listo
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={agregarAdmin} className="rounded-2xl border border-arena-200 bg-white p-5">
+              <h3 className="font-serif text-xl font-semibold text-cacao">Agregar administrador</h3>
+              <p className="mt-1 text-sm leading-relaxed text-cacao-700">
+                Tendrá acceso completo a este panel: catálogo, decoración, solicitudes, parejas, aniversarios y usuarios.
+              </p>
+
+              <div className="mt-4 grid grid-cols-2 gap-1 rounded-xl bg-arena/60 p-1 text-xs font-medium">
+                {[
+                  ['crear', 'Crear cuenta nueva'],
+                  ['existente', 'Ya tiene cuenta'],
+                ].map(([k, l]) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setModo(k)}
+                    className={`rounded-lg px-2 py-1.5 transition-colors ${modo === k ? 'bg-white text-cacao shadow-sm' : 'text-cacao-700 hover:text-cacao'}`}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+
+              <label className="mt-4 block">
+                <span className="etiqueta">Correo</span>
+                <input
+                  type="email"
+                  value={nuevoAdmin}
+                  onChange={(e) => setNuevoAdmin(e.target.value)}
+                  placeholder="correo@ejemplo.com"
+                  className="campo bg-white"
+                  required
+                />
+              </label>
+
+              {modo === 'crear' && (
+                <label className="mt-3 block">
+                  <span className="etiqueta">Contraseña temporal</span>
+                  <div className="flex gap-2">
+                    <input
+                      value={clave}
+                      onChange={(e) => setClave(e.target.value)}
+                      minLength={8}
+                      className="campo bg-white font-mono"
+                      required
+                    />
+                    <button type="button" onClick={() => setClave(generarClave())} className="btn-claro btn-sm shrink-0 bg-white" title="Generar otra">
+                      Generar
+                    </button>
+                  </div>
+                </label>
+              )}
+
+              <button type="submit" disabled={procesando} className="btn-primario btn-sm mt-4 w-full">
+                <Icon name="plus" className="h-4 w-4" /> {modo === 'crear' ? 'Crear cuenta de administrador' : 'Dar acceso de administrador'}
+              </button>
+              <p className="mt-3 text-[11px] leading-relaxed text-cacao-500">
+                {modo === 'crear'
+                  ? 'La cuenta queda confirmada y sin página de boda. Si ese correo ya tiene cuenta, solo se le da el acceso y conserva su contraseña.'
+                  : 'Para alguien que ya se registró (o lo hará) con ese correo. Al iniciar sesión entrará directo a /admin.'}
+              </p>
+            </form>
+          </div>
         </div>
       )}
 

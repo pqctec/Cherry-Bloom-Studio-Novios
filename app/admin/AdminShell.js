@@ -22,6 +22,7 @@ export default function AdminShell({ email, solicitudesNuevas, aniversariosPendi
   const pathname = usePathname()
   const router = useRouter()
   const [abierto, setAbierto] = useState(false)
+  const [claveAbierta, setClaveAbierta] = useState(false)
 
   async function salir() {
     await createClient().auth.signOut()
@@ -95,6 +96,9 @@ export default function AdminShell({ email, solicitudesNuevas, aniversariosPendi
                 Salir
               </button>
             </div>
+            <button onClick={() => setClaveAbierta(true)} className="mt-2 flex items-center gap-1.5 text-xs text-crema/50 hover:text-crema">
+              <Icon name="lock" className="h-3.5 w-3.5" /> Cambiar contraseña
+            </button>
           </div>
         </aside>
         {abierto && <div className="fixed inset-0 z-40 bg-cacao/40 lg:hidden" onClick={() => setAbierto(false)} />}
@@ -109,7 +113,63 @@ export default function AdminShell({ email, solicitudesNuevas, aniversariosPendi
           </header>
           <main className="mx-auto max-w-7xl px-5 py-8 sm:px-8">{children}</main>
         </div>
+        {claveAbierta && <CambiarClave onClose={() => setClaveAbierta(false)} />}
       </div>
     </ToastProvider>
+  )
+}
+
+function CambiarClave({ onClose }) {
+  const [clave, setClave] = useState('')
+  const [repetir, setRepetir] = useState('')
+  const [estado, setEstado] = useState({ cargando: false, error: '', ok: false })
+
+  async function guardar(e) {
+    e.preventDefault()
+    if (clave.length < 8) return setEstado({ error: 'Usa al menos 8 caracteres.' })
+    if (clave !== repetir) return setEstado({ error: 'Las contraseñas no coinciden.' })
+    setEstado({ cargando: true })
+    const { error } = await createClient().auth.updateUser({ password: clave })
+    if (error) return setEstado({ error: error.message })
+    setEstado({ ok: true })
+  }
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-cacao/40" onClick={onClose} />
+      <form onSubmit={guardar} className="relative w-full max-w-sm rounded-2xl bg-crema p-6 shadow-2xl">
+        <h3 className="font-serif text-xl font-semibold text-cacao">Cambiar contraseña</h3>
+        {estado.ok ? (
+          <>
+            <p className="mt-2 text-sm text-cacao-700">Listo, tu contraseña se actualizó. Úsala la próxima vez que inicies sesión.</p>
+            <div className="mt-6 flex justify-end">
+              <button type="button" onClick={onClose} className="btn-primario btn-sm">
+                Cerrar
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <label className="mt-4 block">
+              <span className="etiqueta">Nueva contraseña</span>
+              <input type="password" value={clave} onChange={(e) => setClave(e.target.value)} className="campo bg-white" autoComplete="new-password" required />
+            </label>
+            <label className="mt-3 block">
+              <span className="etiqueta">Repítela</span>
+              <input type="password" value={repetir} onChange={(e) => setRepetir(e.target.value)} className="campo bg-white" autoComplete="new-password" required />
+            </label>
+            {estado.error && <p className="mt-3 text-sm text-terracota-800">{estado.error}</p>}
+            <div className="mt-6 flex justify-end gap-2">
+              <button type="button" onClick={onClose} className="btn-claro btn-sm">
+                Cancelar
+              </button>
+              <button type="submit" disabled={estado.cargando} className="btn-primario btn-sm">
+                {estado.cargando ? 'Guardando…' : 'Guardar'}
+              </button>
+            </div>
+          </>
+        )}
+      </form>
+    </div>
   )
 }
