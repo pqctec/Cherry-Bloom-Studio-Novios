@@ -155,8 +155,11 @@ export default function Cotizador({ couple, servicios, solicitudes, personasConf
             <p className="flex-1 text-sm text-cacao">
               ¡Listo! Recibimos su solicitud. Para una respuesta más rápida, envíennos el resumen por WhatsApp.
             </p>
-            <a href={enviado} target="_blank" rel="noreferrer" className="btn-primario btn-sm">
+            <a href={enviado} target="_blank" rel="noreferrer" className="btn-claro btn-sm">
               <Icon name="chat" className="h-4 w-4" /> Enviar por WhatsApp
+            </a>
+            <a href="/panel?listo=decoracion" className="btn-primario btn-sm">
+              Ir al resumen
             </a>
           </div>
         ) : (

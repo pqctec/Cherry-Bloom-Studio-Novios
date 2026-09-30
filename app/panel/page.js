@@ -6,7 +6,16 @@ import PasoDecoracion from './PasoDecoracion'
 import Novedades from './Novedades'
 import { fechaLimite, fechaLarga } from '@/lib/invitaciones'
 
-export default async function PanelResumenPage() {
+const MENSAJES_LISTO = {
+  datos: 'Guardamos los datos de su boda.',
+  regalos: 'Su lista de regalos está lista.',
+  invitaciones: 'Registraron sus invitaciones.',
+  decoracion: 'Recibimos su solicitud de decoración. Les enviaremos su cotización.',
+  'decoracion-no': 'Anotado: por ahora sin decoración. Pueden activarla cuando quieran.',
+}
+
+export default async function PanelResumenPage({ searchParams }) {
+  const { listo } = (await searchParams) || {}
   const supabase = await createServerSupabaseClient()
   const {
     data: { user },
@@ -115,6 +124,18 @@ export default async function PanelResumenPage() {
           {couple.venue ? ` · ${couple.venue}` : ''}
         </p>
       </div>
+
+      {listo && MENSAJES_LISTO[listo] && (
+        <div className="flex items-center gap-3 rounded-2xl border border-salvia-100 bg-salvia-100/70 px-5 py-4">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-salvia text-white">
+            <Icon name="check" className="h-4 w-4" />
+          </span>
+          <p className="text-sm text-cacao">
+            <b>¡Listo! Paso completado.</b> {MENSAJES_LISTO[listo]}{' '}
+            {completados < pasos.length && <span className="text-cacao-700">Continúen con el siguiente paso.</span>}
+          </p>
+        </div>
+      )}
 
       {tocaRecordar && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-oro-300 bg-oro-100 px-5 py-4">

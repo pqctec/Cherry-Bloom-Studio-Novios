@@ -24,6 +24,7 @@ base de datos separada.
    7. `supabase/migracion_06_invitaciones.sql` — invitaciones personales con pases y regalos desde el link del invitado
    8. `supabase/migracion_07_decoracion_y_regalos.sql` — paso de decoración (sí/no), regalos con cantidad y regalos compartidos
    9. `supabase/migracion_08_avisos_y_plazos.sql` — fecha límite para confirmar, novedades, recordatorios y agradecimientos
+   10. `supabase/migracion_09_portada_propia.sql` — foto de portada propia de los novios
 3. En **Authentication → Providers**, confirma que "Email" esté habilitado.
    Si quieres saltarte la confirmación por correo mientras pruebas, en
    **Authentication → Settings** puedes desactivar "Confirm email"

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import Icon from '@/components/Icon'
 import { ESCENARIOS } from '@/lib/escenarios'
 import { PLAZOS, fechaLimite, fechaLarga } from '@/lib/invitaciones'
+import PortadaPropia from './PortadaPropia'
 
 export default function EditWeddingForm({ couple, privado }) {
   const router = useRouter()
@@ -18,6 +19,7 @@ export default function EditWeddingForm({ couple, privado }) {
     venue: couple.venue || '',
     coverMessage: couple.cover_message || '',
     coverTheme: couple.cover_theme || 'atardecer',
+    coverUrl: couple.cover_url || '',
     plazo: couple.rsvp_deadline_days || 30,
     whatsapp: privado?.whatsapp || '',
     avisar: privado?.notify_whatsapp ?? true,
@@ -46,6 +48,7 @@ export default function EditWeddingForm({ couple, privado }) {
         venue: form.venue || null,
         cover_message: form.coverMessage || null,
         cover_theme: form.coverTheme,
+        cover_url: form.coverUrl || null,
         rsvp_deadline_days: Number(form.plazo),
       })
       .eq('id', couple.id)
@@ -65,13 +68,16 @@ export default function EditWeddingForm({ couple, privado }) {
       return
     }
     setSaved(true)
+    // Paso terminado: confirmamos y volvemos al resumen.
+    router.push('/panel?listo=datos')
     router.refresh()
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div>
-        <h2 className="mb-3 font-serif text-2xl font-semibold">Portada</h2>
+        <h2 className="mb-1 font-serif text-2xl font-semibold">Portada</h2>
+        <p className="mb-3 text-xs text-cacao-500">Elijan uno de nuestros escenarios o suban su propia foto.</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {ESCENARIOS.map((e) => {
             const activo = form.coverTheme === e.id
@@ -96,6 +102,19 @@ export default function EditWeddingForm({ couple, privado }) {
               </button>
             )
           })}
+        </div>
+        <div className="mt-4">
+          <PortadaPropia
+            coupleId={couple.id}
+            valor={form.coverUrl}
+            activa={form.coverTheme === 'propia'}
+            nombres={`${form.brideName || 'Novia'} & ${form.groomName || 'Novio'}`}
+            onSubida={(url) => {
+              set('coverUrl', url)
+              set('coverTheme', 'propia')
+            }}
+            onElegir={() => set('coverTheme', 'propia')}
+          />
         </div>
       </div>
 
@@ -182,7 +201,7 @@ export default function EditWeddingForm({ couple, privado }) {
         <button type="submit" disabled={loading} className="btn-primario">
           {loading ? 'Guardando...' : 'Guardar cambios'}
         </button>
-        {saved && <span className="text-sm text-salvia">Guardado ✓</span>}
+        {saved && <span className="text-sm text-salvia">Guardado ✓ Volviendo al resumen…</span>}
         {error && <span className="text-sm text-terracota-800">{error}</span>}
       </div>
     </form>

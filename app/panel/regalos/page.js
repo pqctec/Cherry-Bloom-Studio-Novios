@@ -3,6 +3,7 @@ import Catalogo from './Catalogo'
 import FondoForm from './FondoForm'
 import GiftRow from './GiftRow'
 import Agradecimientos from './Agradecimientos'
+import TerminarPaso from '@/components/TerminarPaso'
 
 export default async function RegalosPage() {
   const supabase = await createServerSupabaseClient()
@@ -73,6 +74,13 @@ export default async function RegalosPage() {
           </div>
         )}
       </section>
+
+      <TerminarPaso
+        paso="regalos"
+        texto="Terminé mi lista"
+        deshabilitado={lista.length === 0}
+        motivo="Agreguen al menos un regalo o un fondo para completar este paso."
+      />
 
       <Agradecimientos aportes={paraAgradecer} couple={couple} />
 

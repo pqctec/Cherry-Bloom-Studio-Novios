@@ -10,7 +10,7 @@ export default async function ConfiguracionPage() {
 
   const { data: couple } = await supabase
     .from('couples')
-    .select('id, slug, groom_name, bride_name, wedding_date, venue, cover_message, cover_theme, rsvp_deadline_days')
+    .select('id, slug, groom_name, bride_name, wedding_date, venue, cover_message, cover_theme, cover_url, rsvp_deadline_days')
     .eq('user_id', user.id)
     .maybeSingle()
 

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Invitaciones from './Invitaciones'
+import TerminarPaso from '@/components/TerminarPaso'
 
 export default async function InvitadosPage({ searchParams }) {
   const { filtro } = (await searchParams) || {}
@@ -48,6 +49,13 @@ export default async function InvitadosPage({ searchParams }) {
       )}
 
       <Invitaciones couple={couple} invitaciones={invitaciones || []} filtroInicial={filtro || 'todas'} />
+
+      <TerminarPaso
+        paso="invitaciones"
+        texto="Terminé de registrar invitaciones"
+        deshabilitado={(invitaciones || []).length === 0}
+        motivo="Registren al menos una invitación para completar este paso."
+      />
     </div>
   )
 }

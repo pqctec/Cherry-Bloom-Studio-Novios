@@ -19,7 +19,10 @@ export default function PasoDecoracion({ numero, coupleId, interes, solicitudes 
     await supabase.from('couples').update({ decor_interest: valor }).eq('id', coupleId)
     setGuardando(false)
     if (valor === 'si') router.push('/panel/decoracion')
-    else router.refresh()
+    else {
+      router.push('/panel?listo=decoracion-no')
+      router.refresh()
+    }
   }
 
   let detalle = 'Arreglos de mesa, arco floral, mesa de dulces, panel de firmas y más, cotizados a la medida de su boda.'

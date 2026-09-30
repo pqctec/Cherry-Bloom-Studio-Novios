@@ -11,7 +11,7 @@ async function cargarPareja(slug) {
   const supabase = await createServerSupabaseClient()
   const { data: couple } = await supabase
     .from('couples')
-    .select('id, slug, groom_name, bride_name, wedding_date, venue, cover_message, cover_theme, rsvp_deadline_days')
+    .select('id, slug, groom_name, bride_name, wedding_date, venue, cover_message, cover_theme, cover_url, rsvp_deadline_days')
     .eq('slug', slug)
     .maybeSingle()
   return { supabase, couple }
@@ -43,7 +43,7 @@ export default async function WeddingPage({ params, searchParams }) {
     codigo ? supabase.rpc('ver_invitacion', { p_slug: slug, p_code: codigo }) : Promise.resolve({ data: null }),
   ])
 
-  const portada = escenario(couple.cover_theme)
+  const portada = couple.cover_theme === 'propia' && couple.cover_url ? { url: couple.cover_url } : escenario(couple.cover_theme)
   const limite = fechaLimite(couple.wedding_date, couple.rsvp_deadline_days)
   const limiteISO = limite ? limite.toISOString().slice(0, 10) : null
   const fecha = couple.wedding_date
