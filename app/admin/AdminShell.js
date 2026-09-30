@@ -14,6 +14,7 @@ const NAV = [
   { href: '/admin/solicitudes', label: 'Solicitudes', icon: 'inbox', badge: 'solicitudes' },
   { href: '/admin/parejas', label: 'Parejas', icon: 'rings' },
   { href: '/admin/aniversarios', label: 'Aniversarios', icon: 'calendar', badge: 'aniversarios' },
+  { href: '/admin/usuarios', label: 'Usuarios y accesos', icon: 'shield' },
 ]
 
 export default function AdminShell({ email, solicitudesNuevas, aniversariosPendientes = 0, miBoda, children }) {

@@ -221,6 +221,27 @@ export default function Icon({ name, className = 'h-5 w-5' }) {
           <path d="M15 7h6v6" />
         </svg>
       )
+    case 'shield':
+      return (
+        <svg {...common}>
+          <path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z" />
+          <path d="M9 12l2 2 4-4" />
+        </svg>
+      )
+    case 'lock':
+      return (
+        <svg {...common}>
+          <rect x="5" y="11" width="14" height="10" rx="2" />
+          <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+        </svg>
+      )
+    case 'unlock':
+      return (
+        <svg {...common}>
+          <rect x="5" y="11" width="14" height="10" rx="2" />
+          <path d="M8 11V8a4 4 0 0 1 7.5-2" />
+        </svg>
+      )
     default:
       return (
         <svg {...common}>

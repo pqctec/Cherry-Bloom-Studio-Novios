@@ -26,6 +26,7 @@ base de datos separada.
    9. `supabase/migracion_08_avisos_y_plazos.sql` — fecha límite para confirmar, novedades, recordatorios y agradecimientos
    10. `supabase/migracion_09_portada_propia.sql` — foto de portada propia de los novios
    11. `supabase/migracion_10_aniversarios.sql` — bitácora de aniversarios de tus clientes
+   12. `supabase/migracion_11_usuarios.sql` — usuarios y accesos desde /admin
 3. En **Authentication → Providers**, confirma que "Email" esté habilitado.
    Si quieres saltarte la confirmación por correo mientras pruebas, en
    **Authentication → Settings** puedes desactivar "Confirm email"
@@ -142,6 +143,15 @@ Supabase → Table Editor. Las solicitudes que envían los novios desde su panel
 llegan a `decor_requests`; ahí puedes cambiar `status` a `cotizada`,
 `aceptada` o `descartada` y los novios lo verán en su panel. El número de
 WhatsApp para cotizar está en `lib/escenarios.js` (`WHATSAPP_NOVIOS`).
+
+## Usuarios y accesos
+
+En **/admin/usuarios** ves todas las cuentas registradas y puedes:
+
+- **Confirmar el correo a mano** si a alguien no le llegó el correo de confirmación.
+- **Suspender / reactivar** el acceso: no puede iniciar sesión, pero su página de boda y sus datos se conservan.
+- **Eliminar** una cuenta: borra la cuenta y todo lo de su boda (la bitácora de aniversarios se conserva).
+- **Agregar o quitar administradores** por correo. No puedes quitarte a ti mismo ni dejar el panel sin administradores.
 
 ## Aniversarios (recuerdos para tus clientes)
 
