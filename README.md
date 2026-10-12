@@ -145,6 +145,14 @@ llegan a `decor_requests`; ahí puedes cambiar `status` a `cotizada`,
 `aceptada` o `descartada` y los novios lo verán en su panel. El número de
 WhatsApp para cotizar está en `lib/escenarios.js` (`WHATSAPP_NOVIOS`).
 
+## Base de datos siempre activa
+
+El plan gratuito de Supabase pausa el proyecto si pasa unos 7 días sin actividad.
+Para evitarlo, `vercel.json` programa una tarea diaria (8:00 a. m. de Lima) que llama a
+`/api/mantener-activo`, y esa ruta hace una consulta mínima a la base de datos.
+Puedes ver que funciona en Vercel → tu proyecto → **Settings → Cron Jobs**, o abriendo
+`/api/mantener-activo` en el navegador (debe responder `"ok": true`).
+
 ## Usuarios y accesos
 
 En **/admin/usuarios** ves todas las cuentas registradas y puedes:
