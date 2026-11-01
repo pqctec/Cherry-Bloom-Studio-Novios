@@ -5,7 +5,7 @@ import Footer from '@/components/Footer'
 export const metadata = {
   title: 'Cherry Bloom Studio · Novios',
   description:
-    'Crea gratis la página de tu boda: confirmación de invitados, lista de regalos elegida de nuestro catálogo y decoración de tu evento con Cherry Bloom Studio.',
+    'Crea gratis la invitación digital de tu boda o aniversario: 9 diseños, música, confirmación de invitados, lista de regalos y decoración con Cherry Bloom Studio.',
 }
 
 export default function RootLayout({ children }) {

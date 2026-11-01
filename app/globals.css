@@ -40,3 +40,89 @@ body {
     @apply rounded-3xl border border-arena-200 bg-white/80 shadow-sm backdrop-blur;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Invitaciones con modelo (página del invitado)                       */
+/* Los colores y letras salen de variables --t-* (ver lib/temas.js).   */
+/* ------------------------------------------------------------------ */
+.tema {
+  background: var(--t-bg);
+  color: var(--t-text);
+  font-family: var(--t-body);
+}
+.t-display { font-family: var(--t-display); }
+.t-script { font-family: var(--t-script); }
+.t-accent { color: var(--t-accent); }
+.t-muted { color: var(--t-muted); }
+.t-eyebrow {
+  display: block;
+  font-family: Jost, system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--t-muted);
+}
+.t-card {
+  background: var(--t-card);
+  border: 1px solid var(--t-line);
+  border-radius: 1.25rem;
+}
+.t-btn,
+.t-btn-linea {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0.8rem 1.6rem;
+  border-radius: 999px;
+  font-family: Jost, system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: transform 0.15s, opacity 0.15s;
+}
+.t-btn { background: var(--t-boton); color: var(--t-on-accent); }
+.t-btn-linea { border: 1px solid var(--t-boton); color: var(--t-boton); background: transparent; }
+.t-btn:hover, .t-btn-linea:hover { opacity: 0.9; }
+.t-btn:active, .t-btn-linea:active { transform: scale(0.97); }
+.tema[data-modelo='blacktie'] .t-btn,
+.tema[data-modelo='blacktie'] .t-btn-linea,
+.tema[data-modelo='editorial'] .t-btn,
+.tema[data-modelo='editorial'] .t-btn-linea {
+  border-radius: 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.tema[data-modelo='blacktie'] .t-btn,
+.tema[data-modelo='blacktie'] .t-btn-linea { font-family: Cinzel, Georgia, serif; }
+.tema[data-modelo='boho'] .t-btn,
+.tema[data-modelo='boho'] .t-btn-linea,
+.tema[data-modelo='andino'] .t-btn,
+.tema[data-modelo='andino'] .t-btn-linea { border-radius: 14px; }
+
+/* Las secciones de confirmación y regalos toman los colores del modelo. */
+.tema .titulo { color: var(--t-text); font-family: var(--t-display); }
+.tema .eyebrow { color: var(--t-accent); }
+.tema .btn-primario { background: var(--t-boton); color: var(--t-on-accent); }
+.tema .btn-claro { background: transparent; color: var(--t-text); border-color: var(--t-line); }
+.tema .tarjeta { background: var(--t-card); border-color: var(--t-line); }
+.tema .campo { background: var(--t-card); color: var(--t-text); border-color: var(--t-line); }
+.tema .etiqueta, .tema .text-cacao, .tema .text-cacao-700 { color: var(--t-text); }
+.tema .text-cacao-500, .tema .text-cacao-300 { color: var(--t-muted); }
+.tema .bg-arena\/60, .tema .bg-arena { background: var(--t-alt); }
+.tema .bg-white, .tema .bg-white\/80, .tema .bg-crema { background: var(--t-card); }
+.tema .bg-terracota { background: var(--t-boton); color: var(--t-on-accent); }
+.tema .text-terracota, .tema .text-terracota-800, .tema .text-oro, .tema .text-rosa-600 { color: var(--t-accent); }
+.tema .border-arena-300, .tema .border-arena-200 { border-color: var(--t-line); }
+.tema .bg-rubor-100 { background: color-mix(in srgb, var(--t-soft) 45%, var(--t-card)); }
+.tema[data-modelo='blacktie'] .bg-salvia-100 { background: #1f2a20; }
+
+@keyframes t-pulso { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--t-accent) 45%, transparent); } 50% { box-shadow: 0 0 0 12px transparent; } }
+.t-pulso { animation: t-pulso 2.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .t-pulso { animation: none; }
+}
+/* En la vista previa del panel la portada mide lo que el teléfono de muestra. */
+.vista-previa .min-h-\[100svh\] { min-height: 640px; }

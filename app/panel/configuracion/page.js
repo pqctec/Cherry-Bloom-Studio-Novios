@@ -10,7 +10,7 @@ export default async function ConfiguracionPage() {
 
   const { data: couple } = await supabase
     .from('couples')
-    .select('id, slug, groom_name, bride_name, wedding_date, venue, cover_message, cover_theme, cover_url, rsvp_deadline_days')
+    .select('id, slug, groom_name, bride_name, wedding_date, venue, cover_message, cover_theme, cover_url, rsvp_deadline_days, event_type, original_wedding_date, gifts_enabled')
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -21,7 +21,10 @@ export default async function ConfiguracionPage() {
       <div>
         <span className="eyebrow">Nuestra página</span>
         <h1 className="titulo mt-2 text-4xl">Así la verán sus invitados</h1>
-        <p className="mt-2 text-sm text-cacao-700">Elijan la portada y los datos que aparecen en su página pública.</p>
+        <p className="mt-2 text-sm text-cacao-700">
+          Tipo de celebración, fecha, lugar y portada. El diseño (modelo, colores, música) se elige en{' '}
+          <a href="/panel/invitacion" className="text-terracota underline">Mi invitación</a>.
+        </p>
       </div>
       <a href={`/boda/${couple.slug}`} target="_blank" className="btn-claro btn-sm">
         <Icon name="external" className="h-4 w-4" /> Vista previa de su página

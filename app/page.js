@@ -68,8 +68,8 @@ export default async function HomePage() {
             ahora celebremos su historia de amor
           </h1>
           <p className="mt-6 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">
-            La página de su boda, la confirmación de sus invitados y su lista de regalos en un solo
-            lugar — y la decoración de su gran día, de la mano de Cherry Bloom Studio.
+            Invitaciones digitales con 9 diseños para elegir, confirmación de invitados y lista de regalos
+            en un solo lugar — para su boda o su aniversario, de la mano de Cherry Bloom Studio.
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-4">
             <Link href="/registro" className="btn-primario">

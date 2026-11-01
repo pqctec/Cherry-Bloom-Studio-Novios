@@ -7,7 +7,8 @@ import Novedades from './Novedades'
 import { fechaLimite, fechaLarga } from '@/lib/invitaciones'
 
 const MENSAJES_LISTO = {
-  datos: 'Guardamos los datos de su boda.',
+  datos: 'Guardamos sus datos.',
+  invitacion: 'Guardamos el diseño de su invitación.',
   regalos: 'Su lista de regalos está lista.',
   invitaciones: 'Registraron sus invitaciones.',
   decoracion: 'Recibimos su solicitud de decoración. Les enviaremos su cotización.',
@@ -23,7 +24,7 @@ export default async function PanelResumenPage({ searchParams }) {
 
   const { data: couple } = await supabase
     .from('couples')
-    .select('id, slug, bride_name, groom_name, wedding_date, venue, decor_interest, rsvp_deadline_days')
+    .select('id, slug, bride_name, groom_name, wedding_date, venue, decor_interest, rsvp_deadline_days, event_type, gifts_enabled, invite')
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -55,15 +56,24 @@ export default async function PanelResumenPage({ searchParams }) {
 
   const dias = couple.wedding_date ? Math.ceil((new Date(couple.wedding_date + 'T00:00:00') - new Date()) / 86400000) : null
 
+  const aniv = couple.event_type === 'aniversario'
+  const conRegalos = couple.gifts_enabled !== false
   const pasos = [
     {
-      titulo: 'Completen los datos de la boda',
+      titulo: aniv ? 'Completen los datos del aniversario' : 'Completen los datos de la boda',
       detalle: 'Fecha, lugar y fecha límite para confirmar: aparecen en la invitación que reciben sus invitados.',
       hecho: !!(couple.wedding_date && couple.venue),
       href: '/panel/configuracion',
       boton: 'Completar datos',
     },
     {
+      titulo: 'Diseñen su invitación',
+      detalle: 'Elijan modelo, colores, música e itinerario. Cada invitado la recibe con su nombre.',
+      hecho: !!couple.invite?.modelo,
+      href: '/panel/invitacion',
+      boton: 'Elegir diseño',
+    },
+    conRegalos && {
       titulo: 'Armen su lista de regalos',
       detalle: 'Elijan productos del catálogo o abran un fondo. Sus invitados escogerán de aquí.',
       hecho: (giftItems || []).length > 0,
@@ -79,7 +89,7 @@ export default async function PanelResumenPage({ searchParams }) {
       href: '/panel/invitados',
       boton: 'Agregar invitaciones',
     },
-  ]
+  ].filter(Boolean)
   // Paso de decoración: se responde Sí/No; con "No" queda terminado.
   const interes = couple.decor_interest ?? null
   const decoHecha = interes === 'no' || (interes === 'si' && (solicitudesDeco || 0) > 0)
@@ -100,8 +110,13 @@ export default async function PanelResumenPage({ searchParams }) {
 
   const cards = [
     { label: 'Asistirán', value: asistentes, sub: `de ${pases} pases entregados` },
-    { label: 'Regalos elegidos', value: `${regalados}/${unidades}`, sub: 'unidades de su lista ya elegidas' },
-    { label: 'Aportes a sus fondos', value: soles(recaudado), sub: 'suma de aportes registrados' },
+    { label: 'Respondieron', value: `${respondidas}/${inv.length}`, sub: 'invitaciones con respuesta' },
+    ...(conRegalos
+      ? [
+          { label: 'Regalos elegidos', value: `${regalados}/${unidades}`, sub: 'unidades de su lista ya elegidas' },
+          { label: 'Aportes a sus fondos', value: soles(recaudado), sub: 'suma de aportes registrados' },
+        ]
+      : []),
   ]
 
   return (
@@ -114,7 +129,7 @@ export default async function PanelResumenPage({ searchParams }) {
               Faltan <span className="italic text-terracota">{dias}</span> {dias === 1 ? 'día' : 'días'}
             </>
           ) : (
-            'Su gran día'
+            aniv ? 'Su celebración' : 'Su gran día'
           )}
         </h1>
         <p className="mt-2 text-sm text-cacao-700">
@@ -205,7 +220,7 @@ export default async function PanelResumenPage({ searchParams }) {
         </ol>
       </section>
 
-      <div className="grid gap-5 sm:grid-cols-3">
+      <div className={`grid gap-5 sm:grid-cols-2 ${conRegalos ? 'lg:grid-cols-4' : ''}`}>
         {cards.map((card) => (
           <div key={card.label} className="tarjeta p-6">
             <span className="text-[11px] font-medium uppercase tracking-[0.2em] text-rosa-600">{card.label}</span>
@@ -215,10 +230,10 @@ export default async function PanelResumenPage({ searchParams }) {
         ))}
       </div>
 
-      <p className="text-xs text-cacao-500">
+      {conRegalos && <p className="text-xs text-cacao-500">
         Por ahora, cuando un invitado elige un regalo solo se registra su intención; el pago en línea se
         activará en la siguiente etapa.
-      </p>
+      </p>}
     </div>
   )
 }

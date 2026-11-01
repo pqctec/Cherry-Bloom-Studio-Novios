@@ -15,7 +15,7 @@ function avisarNovios(slug) {
 
 // Flujo del invitado con su link personal: 1) confirma asistencia (hasta sus
 // pases) y 2) elige su regalo. Sin link personal solo puede ver la lista.
-export default function Invitado({ slug, fechaLimite, codigo, invitacionInicial, codigoInvalido, regalos }) {
+export default function Invitado({ slug, fechaLimite, codigo, invitacionInicial, codigoInvalido, regalos, textos }) {
   const supabase = createClient()
   const [inv, setInv] = useState(invitacionInicial)
   const [editando, setEditando] = useState(!invitacionInicial || invitacionInicial.status === 'pendiente')
@@ -61,7 +61,7 @@ export default function Invitado({ slug, fechaLimite, codigo, invitacionInicial,
       <section id="confirmar" className="bg-arena/60 px-6 py-20">
         <div className="mx-auto max-w-lg">
           <div className="mb-8 text-center">
-            <span className="eyebrow">Paso 1 · ¿Nos acompañas?</span>
+            <span className="eyebrow">{regalos.length ? 'Paso 1 · ' : ''}¿Nos acompañas?</span>
             <h2 className="titulo mt-3 text-4xl">Confirma tu asistencia</h2>
             <Ornamento className="mt-4 text-oro" />
             {fechaLimite && (
@@ -78,15 +78,15 @@ export default function Invitado({ slug, fechaLimite, codigo, invitacionInicial,
                 {codigoInvalido ? 'No encontramos tu invitación' : 'Confirma desde tu invitación personal'}
               </p>
               <p className="mt-2 text-sm leading-relaxed text-cacao-700">
-                Para confirmar tu asistencia y elegir tu regalo, abre el link personal que te enviaron los novios por
-                WhatsApp. Si no lo tienes, pídeselo a ellos.
+                Para confirmar tu asistencia{regalos.length ? ' y elegir tu regalo' : ''}, abre el link personal que te enviaron
+                por WhatsApp. Si no lo tienes, pídeselo a {textos?.aniversario ? 'los anfitriones' : 'los novios'}.
               </p>
             </div>
           ) : vencido && inv.status === 'pendiente' ? (
             <div className="tarjeta p-8 text-center">
               <Icon name="calendar" className="mx-auto h-9 w-9 text-terracota" />
               <p className="mt-4 font-serif text-2xl font-semibold text-cacao">El plazo para confirmar terminó</p>
-              <p className="mt-2 text-sm text-cacao-700">Si aún deseas asistir, comunícate directamente con los novios.</p>
+              <p className="mt-2 text-sm text-cacao-700">Si aún deseas asistir, comunícate directamente con {textos?.aniversario ? 'los anfitriones' : 'los novios'}.</p>
             </div>
           ) : !editando || vencido ? (
             <div className="tarjeta p-8 text-center">
@@ -161,7 +161,7 @@ export default function Invitado({ slug, fechaLimite, codigo, invitacionInicial,
               )}
 
               <div>
-                <label className="etiqueta">Un mensaje para los novios (opcional)</label>
+                <label className="etiqueta">Un mensaje para {textos?.aniversario ? 'la pareja' : 'los novios'} (opcional)</label>
                 <textarea value={mensaje} onChange={(e) => setMensaje(e.target.value)} rows={2} className="campo" />
               </div>
 
@@ -171,7 +171,7 @@ export default function Invitado({ slug, fechaLimite, codigo, invitacionInicial,
                 {enviando ? 'Enviando…' : 'Enviar mi respuesta'}
               </button>
               <p className="text-center text-[11px] text-cacao-500">
-                Tus datos solo los verán los novios y Cherry Bloom Studio.{' '}
+                Tus datos solo los verán {textos?.aniversario ? 'los anfitriones' : 'los novios'} y Cherry Bloom Studio.{' '}
                 <a href="/privacidad" target="_blank" className="underline">
                   Privacidad
                 </a>
@@ -186,11 +186,11 @@ export default function Invitado({ slug, fechaLimite, codigo, invitacionInicial,
         <section id="regalos" className="mx-auto max-w-6xl px-6 py-20">
           <div className="mb-10 text-center">
             <span className="eyebrow">Paso 2 · Lista de regalos</span>
-            <h2 className="titulo mt-3 text-4xl sm:text-5xl">Tu presencia es nuestro mejor regalo</h2>
+            <h2 className="titulo mt-3 text-4xl sm:text-5xl">{textos?.regalosTitulo || 'Tu presencia es nuestro mejor regalo'}</h2>
             <Ornamento className="mt-4 text-oro" />
             <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-cacao-700">
-              Pero si deseas hacernos un obsequio, aquí elegimos algunas cosas para nuestro nuevo hogar. Cherry
-              Bloom Studio se encarga de comprarlo y entregárnoslo.
+              {textos?.regalosTexto ||
+                'Pero si deseas hacernos un obsequio, aquí elegimos algunas cosas para nuestro nuevo hogar. Cherry Bloom Studio se encarga de comprarlo y entregárnoslo.'}
             </p>
             {!inv && (
               <p className="mx-auto mt-4 max-w-md rounded-full bg-rubor-100 px-4 py-2 text-xs text-terracota-800">

@@ -28,6 +28,7 @@ base de datos separada.
    11. `supabase/migracion_10_aniversarios.sql` — bitácora de aniversarios de tus clientes
    12. `supabase/migracion_11_usuarios.sql` — usuarios y accesos desde /admin
    13. `supabase/migracion_12_crear_admin.sql` — crear cuentas de administrador desde /admin
+   14. `supabase/migracion_13_invitaciones_y_aniversarios.sql` — aniversarios e invitaciones con modelo
 3. En **Authentication → Providers**, confirma que "Email" esté habilitado.
    Si quieres saltarte la confirmación por correo mientras pruebas, en
    **Authentication → Settings** puedes desactivar "Confirm email"
@@ -144,6 +145,16 @@ Supabase → Table Editor. Las solicitudes que envían los novios desde su panel
 llegan a `decor_requests`; ahí puedes cambiar `status` a `cotizada`,
 `aceptada` o `descartada` y los novios lo verán en su panel. El número de
 WhatsApp para cotizar está en `lib/escenarios.js` (`WHATSAPP_NOVIOS`).
+
+## Invitaciones con modelo y aniversarios
+
+- Al registrarse, la pareja elige **boda** o **aniversario**. En un aniversario se pide la fecha en que se casaron y la
+  invitación muestra los años y el nombre (ej. "Bodas de plata · 25 años"). La lista de regalos es opcional y se
+  activa o apaga en *Nuestra página*.
+- En **Mi invitación** (panel de la pareja) eligen uno de los 9 modelos (`lib/temas.js`), su color, frase, hora,
+  sobre animado, música, itinerario, dress code y hospedaje, con vista previa en vivo.
+- **Música:** los MP3 están en `public/musica/` (Pixabay, uso libre). Para agregar una canción, copia el archivo ahí
+  y añade una línea en `lib/musica.js`.
 
 ## Base de datos siempre activa
 

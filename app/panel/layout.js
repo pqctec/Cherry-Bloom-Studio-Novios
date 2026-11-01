@@ -15,7 +15,7 @@ export default async function PanelLayout({ children }) {
 
   const { data: couple } = await supabase
     .from('couples')
-    .select('id, slug, groom_name, bride_name')
+    .select('id, slug, groom_name, bride_name, event_type, gifts_enabled')
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -34,11 +34,11 @@ export default async function PanelLayout({ children }) {
     <div className="mx-auto min-h-screen max-w-6xl px-6 py-8 lg:flex lg:gap-10 lg:py-12">
       <aside className="mb-8 lg:mb-0 lg:w-60 lg:shrink-0">
         <div className="tarjeta p-5 text-center lg:sticky lg:top-24">
-          <span className="eyebrow">Nuestra boda</span>
+          <span className="eyebrow">{couple.event_type === 'aniversario' ? 'Nuestro aniversario' : 'Nuestra boda'}</span>
           <p className="mt-2 font-script text-4xl leading-tight text-terracota">
             {couple.bride_name} &amp; {couple.groom_name}
           </p>
-          <PanelNav slug={couple.slug} nuevas={nuevas || 0} />
+          <PanelNav slug={couple.slug} nuevas={nuevas || 0} conRegalos={couple.gifts_enabled !== false} />
           <div className="mt-4 border-t border-arena-200 pt-3">
             <LogoutButton />
           </div>

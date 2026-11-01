@@ -6,18 +6,19 @@ import Icon from '@/components/Icon'
 
 const NAV = [
   { href: '/panel', label: 'Resumen', icon: 'heart' },
-  { href: '/panel/invitados', label: 'Invitaciones', icon: 'users' },
+  { href: '/panel/invitacion', label: 'Mi invitación', icon: 'mail' },
+  { href: '/panel/invitados', label: 'Invitados', icon: 'users' },
   { href: '/panel/regalos', label: 'Lista de regalos', icon: 'gift' },
   { href: '/panel/decoracion', label: 'Decoración', icon: 'flower' },
   { href: '/panel/configuracion', label: 'Nuestra página', icon: 'rings' },
 ]
 
-export default function PanelNav({ slug, nuevas = 0 }) {
+export default function PanelNav({ slug, nuevas = 0, conRegalos = true }) {
   const pathname = usePathname()
 
   return (
     <nav className="mt-5 flex gap-1 overflow-x-auto text-left lg:flex-col">
-      {NAV.map((item) => {
+      {NAV.filter((item) => conRegalos || item.href !== '/panel/regalos').map((item) => {
         const activo = pathname === item.href
         return (
           <Link
@@ -41,7 +42,7 @@ export default function PanelNav({ slug, nuevas = 0 }) {
         className="flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-rosa-600 hover:bg-arena"
       >
         <Icon name="link" className="h-4 w-4" />
-        Ver nuestra página
+        Ver nuestra invitación
       </a>
     </nav>
   )

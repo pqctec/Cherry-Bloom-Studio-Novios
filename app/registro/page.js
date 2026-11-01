@@ -26,6 +26,8 @@ export default function RegistroPage() {
     groomName: '',
     brideName: '',
     weddingDate: '',
+    eventType: 'boda',
+    originalDate: '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -55,6 +57,8 @@ export default function RegistroPage() {
             groom_name: form.groomName,
             bride_name: form.brideName,
             wedding_date: form.weddingDate || null,
+            event_type: form.eventType,
+            original_wedding_date: form.eventType === 'aniversario' ? form.originalDate || null : null,
           },
         },
       })
@@ -83,23 +87,52 @@ export default function RegistroPage() {
       <span className="eyebrow">Crea su página gratis</span>
       <h1 className="titulo mt-3 text-4xl sm:text-5xl">Cuéntennos de ustedes</h1>
       <p className="mt-3 text-sm text-cacao-700">
-        En un minuto tienen su página lista para compartir con sus invitados.
+        Bodas y aniversarios: en un minuto tienen su invitación lista para compartir.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-10 space-y-5">
+        <div>
+          <span className="etiqueta">¿Qué van a celebrar?</span>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              ['boda', 'Nuestra boda'],
+              ['aniversario', 'Nuestro aniversario'],
+            ].map(([v, l]) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, eventType: v }))}
+                aria-pressed={form.eventType === v}
+                className={`rounded-xl border px-3 py-3 text-sm font-medium transition ${
+                  form.eventType === v ? 'border-terracota bg-terracota text-crema' : 'border-arena-300 bg-white text-cacao-700 hover:bg-arena'
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="etiqueta">Nombre de la novia</label>
+            <label className="etiqueta">{form.eventType === 'aniversario' ? 'Nombre de ella' : 'Nombre de la novia'}</label>
             <input required value={form.brideName} onChange={update('brideName')} className="campo" placeholder="Ana" />
           </div>
           <div>
-            <label className="etiqueta">Nombre del novio</label>
+            <label className="etiqueta">{form.eventType === 'aniversario' ? 'Nombre de él' : 'Nombre del novio'}</label>
             <input required value={form.groomName} onChange={update('groomName')} className="campo" placeholder="Luis" />
           </div>
         </div>
 
+        {form.eventType === 'aniversario' && (
+          <div>
+            <label className="etiqueta">¿Cuándo se casaron?</label>
+            <input type="date" value={form.originalDate} onChange={update('originalDate')} className="campo" />
+          </div>
+        )}
+
         <div>
-          <label className="etiqueta">Fecha de la boda (opcional)</label>
+          <label className="etiqueta">{form.eventType === 'aniversario' ? 'Fecha de la celebración (opcional)' : 'Fecha de la boda (opcional)'}</label>
           <input type="date" value={form.weddingDate} onChange={update('weddingDate')} className="campo" />
         </div>
 
@@ -128,7 +161,7 @@ export default function RegistroPage() {
             <a href="/privacidad" target="_blank" className="font-medium text-terracota underline">
               política de privacidad
             </a>{' '}
-            y el uso de los datos de mis invitados para gestionar nuestra boda.
+            y el uso de los datos de mis invitados para gestionar nuestra celebración.
           </span>
         </label>
 

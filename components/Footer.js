@@ -4,7 +4,8 @@ import { usePathname } from 'next/navigation'
 
 export default function Footer() {
   const pathname = usePathname() || ''
-  if (pathname.startsWith('/admin')) return null
+  // La invitación (/boda/...) va a pantalla completa, sin la barra del sitio.
+  if (pathname.startsWith('/admin') || pathname.startsWith('/boda/')) return null
   return (
     <footer className="border-t border-arena-200 bg-arena/60 px-6 py-12 text-center">
       <p className="font-script text-3xl text-rosa-600">Cherry Bloom Studio</p>

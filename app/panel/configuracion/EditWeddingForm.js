@@ -7,6 +7,7 @@ import Icon from '@/components/Icon'
 import { ESCENARIOS } from '@/lib/escenarios'
 import { PLAZOS, fechaLimite, fechaLarga } from '@/lib/invitaciones'
 import PortadaPropia from './PortadaPropia'
+import { aniosDeCasados, nombreBodas } from '@/lib/temas'
 
 export default function EditWeddingForm({ couple, privado }) {
   const router = useRouter()
@@ -21,6 +22,9 @@ export default function EditWeddingForm({ couple, privado }) {
     coverTheme: couple.cover_theme || 'atardecer',
     coverUrl: couple.cover_url || '',
     plazo: couple.rsvp_deadline_days || 30,
+    eventType: couple.event_type || 'boda',
+    originalDate: couple.original_wedding_date || '',
+    gifts: couple.gifts_enabled !== false,
     whatsapp: privado?.whatsapp || '',
     avisar: privado?.notify_whatsapp ?? true,
   })
@@ -50,6 +54,9 @@ export default function EditWeddingForm({ couple, privado }) {
         cover_theme: form.coverTheme,
         cover_url: form.coverUrl || null,
         rsvp_deadline_days: Number(form.plazo),
+        event_type: form.eventType,
+        original_wedding_date: form.eventType === 'aniversario' ? form.originalDate || null : null,
+        gifts_enabled: !!form.gifts,
       })
       .eq('id', couple.id)
 
@@ -75,9 +82,64 @@ export default function EditWeddingForm({ couple, privado }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="tarjeta max-w-xl space-y-5 p-6">
+        <div>
+          <h2 className="font-serif text-2xl font-semibold">¿Qué celebran?</h2>
+          <p className="text-xs text-cacao-500">Cambia los textos de la invitación (boda o aniversario).</p>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            ['boda', 'Nuestra boda'],
+            ['aniversario', 'Nuestro aniversario'],
+          ].map(([v, l]) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => {
+                set('eventType', v)
+                if (v === 'aniversario' && form.eventType !== 'aniversario') set('gifts', false)
+                if (v === 'boda' && form.eventType !== 'boda') set('gifts', true)
+              }}
+              aria-pressed={form.eventType === v}
+              className={`rounded-xl border px-3 py-3 text-sm font-medium transition ${
+                form.eventType === v ? 'border-terracota bg-terracota text-crema' : 'border-arena-300 bg-white text-cacao-700 hover:bg-arena'
+              }`}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+        {form.eventType === 'aniversario' && (
+          <div>
+            <label className="etiqueta" htmlFor="original">
+              ¿Cuándo se casaron?
+            </label>
+            <input id="original" type="date" value={form.originalDate} onChange={update('originalDate')} className="campo" />
+            {aniosDeCasados(form.originalDate, form.weddingDate) && (
+              <p className="mt-2 text-sm text-terracota">
+                Celebran {aniosDeCasados(form.originalDate, form.weddingDate)} años
+                {nombreBodas(aniosDeCasados(form.originalDate, form.weddingDate)) ? ` · ${nombreBodas(aniosDeCasados(form.originalDate, form.weddingDate))}` : ''}
+              </p>
+            )}
+          </div>
+        )}
+        <label className="flex items-start gap-3">
+          <input type="checkbox" checked={form.gifts} onChange={(e) => set('gifts', e.target.checked)} className="mt-1 h-4 w-4 accent-[#A8553A]" />
+          <span>
+            <span className="block text-sm font-medium text-cacao">Incluir lista de regalos</span>
+            <span className="block text-xs text-cacao-500">
+              {form.eventType === 'aniversario' ? 'Opcional en aniversarios: si la apagan, la invitación no muestra regalos.' : 'Sus invitados podrán elegir un regalo desde su invitación.'}
+            </span>
+          </span>
+        </label>
+      </div>
+
       <div>
         <h2 className="mb-1 font-serif text-2xl font-semibold">Portada</h2>
-        <p className="mb-3 text-xs text-cacao-500">Elijan uno de nuestros escenarios o suban su propia foto.</p>
+        <p className="mb-3 text-xs text-cacao-500">
+          Elijan uno de nuestros escenarios o suban su propia foto. Se usa de fondo en el modelo “Clásica con foto”; en los demás modelos su
+          foto propia aparece enmarcada.
+        </p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {ESCENARIOS.map((e) => {
             const activo = form.coverTheme === e.id
@@ -121,16 +183,16 @@ export default function EditWeddingForm({ couple, privado }) {
       <div className="tarjeta max-w-xl space-y-5 p-6">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="etiqueta">Nombre de la novia</label>
+            <label className="etiqueta">{form.eventType === 'aniversario' ? 'Nombre de ella' : 'Nombre de la novia'}</label>
             <input value={form.brideName} onChange={update('brideName')} className="campo" />
           </div>
           <div>
-            <label className="etiqueta">Nombre del novio</label>
+            <label className="etiqueta">{form.eventType === 'aniversario' ? 'Nombre de él' : 'Nombre del novio'}</label>
             <input value={form.groomName} onChange={update('groomName')} className="campo" />
           </div>
         </div>
         <div>
-          <label className="etiqueta">Fecha de la boda</label>
+          <label className="etiqueta">{form.eventType === 'aniversario' ? 'Fecha de la celebración' : 'Fecha de la boda'}</label>
           <input type="date" value={form.weddingDate} onChange={update('weddingDate')} className="campo" />
         </div>
         <div>
@@ -174,7 +236,7 @@ export default function EditWeddingForm({ couple, privado }) {
               Sus invitados podrán confirmar hasta el <b>{fechaLarga(fechaLimite(form.weddingDate, Number(form.plazo)))}</b>.
             </>
           ) : (
-            'Definan la fecha de la boda para calcular la fecha límite.'
+            `Definan la fecha ${form.eventType === 'aniversario' ? 'de la celebración' : 'de la boda'} para calcular la fecha límite.`
           )}
         </p>
       </div>

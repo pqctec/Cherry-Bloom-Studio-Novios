@@ -12,7 +12,7 @@ export default async function InvitadosPage({ searchParams }) {
 
   const { data: couple } = await supabase
     .from('couples')
-    .select('id, slug, bride_name, groom_name, wedding_date, venue, rsvp_deadline_days')
+    .select('id, slug, bride_name, groom_name, wedding_date, venue, rsvp_deadline_days, event_type, original_wedding_date, gifts_enabled')
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -37,7 +37,7 @@ export default async function InvitadosPage({ searchParams }) {
         </p>
       </div>
 
-      {!regalos && (
+      {!regalos && couple.gifts_enabled !== false && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-oro-300 bg-oro-100 px-5 py-4">
           <p className="text-sm text-cacao">
             <b>Antes de enviar las invitaciones</b>, completen su lista de regalos para que sus invitados puedan elegir.

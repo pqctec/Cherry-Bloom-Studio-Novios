@@ -11,7 +11,7 @@ export default async function RegalosPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const { data: couple } = await supabase.from('couples').select('id, bride_name, groom_name').eq('user_id', user.id).maybeSingle()
+  const { data: couple } = await supabase.from('couples').select('id, bride_name, groom_name, gifts_enabled').eq('user_id', user.id).maybeSingle()
 
   const [{ data: items }, { data: catalogo }] = await Promise.all([
     supabase
@@ -52,6 +52,17 @@ export default async function RegalosPage() {
           fondo de dinero para lo que ustedes quieran.
         </p>
       </div>
+
+      {couple.gifts_enabled === false && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-oro-300 bg-oro-100 px-5 py-4">
+          <p className="text-sm text-cacao">
+            <b>La lista de regalos está apagada:</b> sus invitados no la ven. Pueden activarla en Nuestra página.
+          </p>
+          <a href="/panel/configuracion" className="btn-primario btn-sm">
+            Activar lista
+          </a>
+        </div>
+      )}
 
       <section>
         <div className="mb-4 flex flex-wrap items-end justify-between gap-2">

@@ -242,6 +242,33 @@ export default function Icon({ name, className = 'h-5 w-5' }) {
           <path d="M8 11V8a4 4 0 0 1 7.5-2" />
         </svg>
       )
+    case 'music':
+      return (
+        <svg {...common}>
+          <path d="M9 18V5l12-2v13" />
+          <circle cx="6" cy="18" r="3" />
+          <circle cx="18" cy="16" r="3" />
+        </svg>
+      )
+    case 'mail':
+      return (
+        <svg {...common}>
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <path d="M3 7l9 6 9-6" />
+        </svg>
+      )
+    case 'play':
+      return (
+        <svg {...common}>
+          <path d="M7 5l12 7-12 7z" />
+        </svg>
+      )
+    case 'pause':
+      return (
+        <svg {...common}>
+          <path d="M8 5v14M16 5v14" />
+        </svg>
+      )
     default:
       return (
         <svg {...common}>

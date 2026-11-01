@@ -18,7 +18,8 @@ export default function Header() {
   }, [pathname])
   const sobreFoto = pathname === '/' || pathname.startsWith('/boda/')
   const enPanel = pathname.startsWith('/panel')
-  if (pathname.startsWith('/admin')) return null
+  // La invitación (/boda/...) va a pantalla completa, sin la barra del sitio.
+  if (pathname.startsWith('/admin') || pathname.startsWith('/boda/')) return null
 
   return (
     <header
