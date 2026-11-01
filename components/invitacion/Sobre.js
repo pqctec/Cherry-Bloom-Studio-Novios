@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 
 // Sobre de apertura: cubre la invitación hasta que el invitado toca el sello.
-export default function Sobre({ iniciales, para }) {
+export default function Sobre({ iniciales, para, estilo = 'clasico' }) {
   const [estado, setEstado] = useState('cerrado') // cerrado → abriendo → listo
 
   useEffect(() => {
@@ -22,6 +22,46 @@ export default function Sobre({ iniciales, para }) {
 
   if (estado === 'listo') return null
   const abriendo = estado === 'abriendo'
+
+  // Estilo "puertas" (modelo PRO): sobre vertical a pantalla completa con sello
+  // dorado; al tocarlo, las dos mitades se abren hacia los lados.
+  if (estilo === 'puertas') {
+    const mitad = 'absolute inset-y-0 w-1/2 transition-transform duration-[1100ms] ease-in-out'
+    return (
+      <div className="fixed inset-0 z-[60] overflow-hidden">
+        <div className={`${mitad} left-0`} style={{ background: 'var(--t-soft)', transform: abriendo ? 'translateX(-100%)' : 'none', boxShadow: 'inset -14px 0 30px rgba(0,0,0,.18)' }}>
+          <svg aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
+            <path d="M0 0 L100 50 L0 100" fill="none" stroke="rgba(0,0,0,.12)" strokeWidth="0.4" />
+          </svg>
+        </div>
+        <div className={`${mitad} right-0`} style={{ background: 'var(--t-soft)', transform: abriendo ? 'translateX(100%)' : 'none', boxShadow: 'inset 14px 0 30px rgba(0,0,0,.18)' }}>
+          <svg aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
+            <path d="M100 0 L0 50 L100 100" fill="none" stroke="rgba(0,0,0,.12)" strokeWidth="0.4" />
+          </svg>
+        </div>
+        <div className={`absolute inset-0 flex flex-col items-center justify-center gap-6 px-6 text-center transition-opacity duration-500 ${abriendo ? 'opacity-0' : 'opacity-100'}`}>
+          <p className="text-lg tracking-[0.2em] text-white/90" style={{ fontFamily: 'var(--t-display)' }}>
+            {para ? para.toUpperCase() : 'TIENES UNA INVITACIÓN'}
+          </p>
+          <button
+            type="button"
+            onClick={abrir}
+            aria-label="Abrir la invitación"
+            className="flex h-28 w-28 items-center justify-center rounded-full text-3xl"
+            style={{
+              background: 'radial-gradient(circle at 35% 30%, #F4DE96, var(--t-accent) 55%, #7A5E1F)',
+              color: '#5A4413',
+              fontFamily: 'var(--t-script)',
+              boxShadow: 'inset 0 0 0 7px rgba(255,255,255,.22), inset 0 0 0 9px rgba(0,0,0,.08), 0 10px 24px rgba(0,0,0,.35)',
+            }}
+          >
+            {iniciales.replace('&', '')}
+          </button>
+          <p className="text-[11px] uppercase tracking-[0.3em] text-white/80">Toca el sello para abrir</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div

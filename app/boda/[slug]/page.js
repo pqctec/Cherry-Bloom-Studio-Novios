@@ -30,7 +30,7 @@ export default async function InvitacionPage({ params, searchParams }) {
   const { supabase, couple } = await cargarPareja(slug)
   if (!couple) notFound()
 
-  const [{ data: giftItems }, { data: invitacion }] = await Promise.all([
+  const [{ data: giftItems }, { data: invitacion }, { data: pro }] = await Promise.all([
     couple.gifts_enabled === false
       ? Promise.resolve({ data: [] })
       : supabase
@@ -40,6 +40,7 @@ export default async function InvitacionPage({ params, searchParams }) {
           .order('type', { ascending: true })
           .order('created_at', { ascending: true }),
     codigo ? supabase.rpc('ver_invitacion', { p_slug: slug, p_code: codigo }) : Promise.resolve({ data: null }),
+    supabase.from('couple_pro').select('unlocked_at').eq('couple_id', couple.id).maybeSingle(),
   ])
 
   const limite = fechaLimite(couple.wedding_date, couple.rsvp_deadline_days)
@@ -53,6 +54,7 @@ export default async function InvitacionPage({ params, searchParams }) {
       codigoInvalido={!!codigo && !invitacion}
       limiteISO={limite ? limite.toISOString().slice(0, 10) : null}
       slug={slug}
+      proActivo={!!pro?.unlocked_at}
     />
   )
 }

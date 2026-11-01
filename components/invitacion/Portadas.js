@@ -1,4 +1,5 @@
 import CuentaRegresiva from './CuentaRegresiva'
+import Historia from './Historia'
 
 // Portada (primera pantalla) de cada modelo de invitación.
 // Todas reciben lo mismo; solo cambia el diseño.
@@ -488,6 +489,7 @@ const PORTADAS = {
   olivo: Olivo,
   andino: Andino,
   sobre: SobreSello,
+  historia: Historia,
 }
 
 export default function Portada(props) {

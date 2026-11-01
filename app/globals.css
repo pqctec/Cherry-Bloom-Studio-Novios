@@ -126,3 +126,5 @@ body {
 }
 /* En la vista previa del panel la portada mide lo que el teléfono de muestra. */
 .vista-previa .min-h-\[100svh\] { min-height: 640px; }
+.vista-previa .h-\[68svh\] { height: 430px; }
+.vista-previa .h-\[62svh\] { height: 400px; }

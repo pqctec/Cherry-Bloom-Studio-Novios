@@ -9,8 +9,13 @@ import Invitado from './Invitado'
 
 // La invitación completa, ya con el modelo y la personalización de la pareja.
 // La usa la página pública (/boda/[slug]) y la vista previa del panel.
-export default function InvitacionPublica({ couple, invitacion, regalos, codigo, codigoInvalido, limiteISO, slug, vistaPrevia = false }) {
+export default function InvitacionPublica({ couple, invitacion, regalos, codigo, codigoInvalido, limiteISO, slug, vistaPrevia = false, proActivo = false }) {
   const inv = invitacionConDefectos(couple.invite || {}, couple)
+  // Un modelo PRO solo se muestra a los invitados cuando está pagado/activado.
+  if (modelo(inv.modelo).pro && !proActivo) {
+    inv.modelo = 'clasica'
+    inv.paleta = 'terracota'
+  }
   const m = modelo(inv.modelo)
   const t = textosEvento(couple)
   const f = partesFecha(couple.wedding_date)
@@ -24,7 +29,7 @@ export default function InvitacionPublica({ couple, invitacion, regalos, codigo,
   return (
     <main className="tema min-h-screen" data-modelo={m.id} style={variablesTema(m.id, inv.paleta)}>
       {fuentes && <link rel="stylesheet" href={fuentes} precedence="default" />}
-      {inv.sobre && !vistaPrevia && <Sobre iniciales={iniciales(couple)} para={invitacion?.name} />}
+      {inv.sobre && !vistaPrevia && <Sobre iniciales={iniciales(couple)} para={invitacion?.name} estilo={m.id === 'historia' ? 'puertas' : 'clasico'} />}
       {musica && <Musica url={musica.url} nombre={musica.nombre} />}
 
       <Portada
@@ -36,9 +41,10 @@ export default function InvitacionPublica({ couple, invitacion, regalos, codigo,
         hayRegalos={lista.length > 0}
         portadaUrl={portadaUrl}
         iniciales={iniciales(couple)}
+        limite={limiteISO}
       />
 
-      {m.id !== 'clasica' && <Foto url={fotoPropia} nombres={nombres} />}
+      {m.id !== 'clasica' && m.id !== 'historia' && <Foto url={fotoPropia} nombres={nombres} />}
       <Mensaje texto={couple.cover_message} firma={nombres} />
       <Itinerario items={inv.itinerario} />
       <DressCode dresscode={inv.dresscode} />

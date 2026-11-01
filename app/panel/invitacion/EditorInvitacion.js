@@ -5,20 +5,23 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Icon from '@/components/Icon'
 import Portada from '@/components/invitacion/Portadas'
-import { MODELOS, modelo as buscarModelo, paleta as buscarPaleta, variablesTema, invitacionConDefectos, textosEvento, partesFecha, iniciales } from '@/lib/temas'
+import { PRECIO_PRO, MODELOS, modelo as buscarModelo, paleta as buscarPaleta, variablesTema, invitacionConDefectos, textosEvento, partesFecha, iniciales } from '@/lib/temas'
 import { CANCIONES } from '@/lib/musica'
-import { escenario } from '@/lib/escenarios'
+import { escenario, linkWhatsApp } from '@/lib/escenarios'
+import { comprimir } from '@/lib/imagenes'
 
 const MAX_ITINERARIO = 8
 const MAX_COLORES = 5
 
-export default function EditorInvitacion({ couple }) {
+export default function EditorInvitacion({ couple, pro = null }) {
   const router = useRouter()
   const supabase = createClient()
   const [inv, setInv] = useState(() => invitacionConDefectos(couple.invite || {}, couple))
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
   const [sonando, setSonando] = useState(null)
+  const [subiendo, setSubiendo] = useState(null) // índice de la foto que se está subiendo
+  const [proEstado, setProEstado] = useState(pro?.unlocked_at ? 'activo' : pro?.requested_at ? 'solicitado' : 'no')
   const audio = useRef(null)
 
   const m = buscarModelo(inv.modelo)
@@ -51,6 +54,39 @@ export default function EditorInvitacion({ couple }) {
   const colores = inv.dresscode.colores
   const setDress = (campo, valor) => set('dresscode', { ...inv.dresscode, [campo]: valor })
 
+  async function subirFoto(i, file) {
+    if (!file) return
+    if (!file.type.startsWith('image/')) return setError('El archivo debe ser una foto (JPG, PNG o WEBP).')
+    setError(null)
+    setSubiendo(i)
+    try {
+      const datos = await comprimir(file, 2000)
+      const ruta = `${couple.id}/pro-${i + 1}-${Date.now()}.jpg`
+      const { error: err } = await supabase.storage.from('portadas').upload(ruta, datos, { contentType: 'image/jpeg', cacheControl: '31536000' })
+      if (err) throw err
+      const { data } = supabase.storage.from('portadas').getPublicUrl(ruta)
+      const fotos = [...inv.fotos]
+      fotos[i] = data.publicUrl
+      set('fotos', fotos.filter(Boolean))
+    } catch (e) {
+      setError(e.message || 'No pudimos subir la foto.')
+    } finally {
+      setSubiendo(null)
+    }
+  }
+
+  async function pedirPro() {
+    const { error: err } = await supabase.rpc('solicitar_pro')
+    if (err) return setError(err.message)
+    setProEstado('solicitado')
+    window.open(
+      linkWhatsApp(
+        `Hola Cherry Bloom Studio 💍 Quiero activar el diseño PRO "Historia en fotos" (${PRECIO_PRO}) para la invitación de ${couple.bride_name} y ${couple.groom_name} (${couple.slug}). ¿Cómo hago el pago?`
+      ),
+      '_blank'
+    )
+  }
+
   async function guardar() {
     setGuardando(true)
     setError(null)
@@ -67,6 +103,8 @@ export default function EditorInvitacion({ couple }) {
         .map((f) => ({ hora: f.hora || '', titulo: f.titulo.trim().slice(0, 60), lugar: (f.lugar || '').trim().slice(0, 80) })),
       dresscode: { texto: inv.dresscode.texto.trim().slice(0, 80), colores },
       hospedaje: inv.hospedaje.trim().slice(0, 500),
+      fotos: inv.fotos,
+      contacto: inv.contacto.trim().slice(0, 80),
     }
     const { error: err } = await supabase.from('couples').update({ invite: limpio }).eq('id', couple.id)
     setGuardando(false)
@@ -86,7 +124,7 @@ export default function EditorInvitacion({ couple }) {
         {/* Modelo */}
         <section className="tarjeta p-6">
           <h2 className="font-serif text-2xl font-semibold">1. Modelo</h2>
-          <p className="mb-4 text-xs text-cacao-500">Todos son gratis. Pueden cambiarlo cuando quieran.</p>
+          <p className="mb-4 text-xs text-cacao-500">Todos son gratis, menos los marcados PRO. Pueden cambiarlo cuando quieran.</p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {MODELOS.map((mo) => {
               const p = mo.paletas[0]
@@ -102,20 +140,23 @@ export default function EditorInvitacion({ couple }) {
                   <div
                     className="flex h-28 flex-col items-center justify-center gap-1"
                     style={{
-                      background: mo.id === 'clasica' ? `linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.45)), url(${escenario(couple.cover_theme).mini}) center/cover` : mo.base.bg,
-                      color: mo.id === 'clasica' ? '#fff' : mo.base.text,
+                      background: mo.id === 'clasica' ? `linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.45)), url(${escenario(couple.cover_theme).mini}) center/cover` : mo.pro ? p.soft : mo.base.bg,
+                      color: mo.id === 'clasica' || mo.pro ? '#fff' : mo.base.text,
                     }}
                   >
                     {mo.id === 'andino' && <span className="absolute inset-x-0 top-0 h-2.5" style={{ background: `repeating-linear-gradient(90deg, ${p.accent} 0 14px, #E3A82B 14px 20px, #1F7A72 20px 26px)` }} />}
-                    <span className="text-3xl leading-none" style={{ fontFamily: mo.script, color: mo.id === 'clasica' ? '#fff' : p.accent }}>
-                      {(couple.bride_name || 'A')[0]} &amp; {(couple.groom_name || 'B')[0]}
+                    <span className="text-3xl leading-none" style={mo.pro ? { fontFamily: mo.script, color: '#5A4413', background: 'radial-gradient(circle at 35% 30%, #F4DE96, #B8963E 55%, #7A5E1F)', borderRadius: 999, width: 56, height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 } : { fontFamily: mo.script, color: mo.id === 'clasica' ? '#fff' : p.accent }}>
+                      {mo.pro ? `${(couple.bride_name || 'A')[0]}${(couple.groom_name || 'B')[0]}` : `${(couple.bride_name || 'A')[0]} & ${(couple.groom_name || 'B')[0]}`}
                     </span>
                     <span className="text-[10px] uppercase tracking-[0.25em] opacity-80" style={{ fontFamily: mo.display }}>
                       {t.aniversario ? 'Aniversario' : 'Nos casamos'}
                     </span>
                   </div>
                   <div className="bg-white px-3 py-2.5">
-                    <p className="text-sm font-medium text-cacao">{mo.nombre}</p>
+                    <p className="flex items-center gap-1.5 text-sm font-medium text-cacao">
+                      {mo.nombre}
+                      {mo.pro && <span className="rounded-full bg-cacao px-1.5 py-0.5 text-[9px] font-semibold tracking-wider text-oro-300">PRO</span>}
+                    </p>
                     <p className="line-clamp-2 text-[11px] leading-snug text-cacao-500">{mo.descripcion}</p>
                   </div>
                   {activo && (
@@ -134,6 +175,66 @@ export default function EditorInvitacion({ couple }) {
             <p className="mt-3 text-xs text-cacao-500">Su foto aparecerá enmarcada debajo de la portada.</p>
           )}
         </section>
+
+        {/* Diseño PRO */}
+        {m.pro && (
+          <section className="tarjeta space-y-5 border-oro-300 p-6">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="font-serif text-2xl font-semibold">Diseño PRO · {PRECIO_PRO}</h2>
+                <p className="text-xs text-cacao-500">Pago único por su celebración. Pueden probarlo y verlo aquí antes de pagar.</p>
+              </div>
+              {proEstado === 'activo' ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-salvia-100 px-3 py-1.5 text-sm font-medium text-salvia">
+                  <Icon name="check" className="h-4 w-4" /> PRO activo
+                </span>
+              ) : proEstado === 'solicitado' ? (
+                <button type="button" onClick={pedirPro} className="btn-claro btn-sm">
+                  Solicitud enviada · escribir de nuevo
+                </button>
+              ) : (
+                <button type="button" onClick={pedirPro} className="btn-primario btn-sm">
+                  Activar PRO por {PRECIO_PRO}
+                </button>
+              )}
+            </div>
+            {proEstado !== 'activo' && (
+              <p className="rounded-xl bg-oro-100 px-4 py-3 text-sm text-cacao">
+                Mientras no esté activo, sus invitados verán el modelo <b>Clásica con foto</b>. Al confirmar su pago lo activamos y la
+                invitación cambia sola.
+              </p>
+            )}
+            <div>
+              <p className="etiqueta">Sus fotos (verticales, como para historia de Instagram)</p>
+              <div className="grid max-w-md grid-cols-2 gap-3">
+                {[0, 1].map((i) => (
+                  <label key={i} className="relative flex aspect-[3/4] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-arena-300 bg-white text-center hover:border-terracota">
+                    {inv.fotos[i] ? (
+                      <img src={inv.fotos[i]} alt={`Foto ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" />
+                    ) : (
+                      <span className="px-3 text-xs text-cacao-500">
+                        <Icon name="upload" className="mx-auto mb-2 h-6 w-6 text-terracota" />
+                        {i === 0 ? 'Foto de portada' : 'Foto de “Los detalles”'}
+                      </span>
+                    )}
+                    {subiendo === i && <span className="absolute inset-0 flex items-center justify-center bg-white/80 text-sm text-cacao">Subiendo…</span>}
+                    {inv.fotos[i] && subiendo !== i && (
+                      <span className="absolute inset-x-2 bottom-2 rounded-full bg-black/55 py-1 text-[11px] text-white">Cambiar foto</span>
+                    )}
+                    <input type="file" accept="image/*" className="sr-only" onChange={(e) => subirFoto(i, e.target.files?.[0])} />
+                  </label>
+                ))}
+              </div>
+              <p className="mt-2 text-[11px] text-cacao-500">Recomendado: fotos verticales de al menos 1080 × 1600 px. Si no suben fotos, usamos paisajes de ejemplo.</p>
+            </div>
+            <div>
+              <label className="etiqueta" htmlFor="contacto">
+                Contacto para el RSVP (opcional)
+              </label>
+              <input id="contacto" value={inv.contacto} maxLength={80} onChange={(e) => set('contacto', e.target.value)} className="campo" placeholder="WhatsApp 987 654 321" />
+            </div>
+          </section>
+        )}
 
         {/* Color */}
         <section className="tarjeta p-6">

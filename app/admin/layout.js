@@ -38,10 +38,17 @@ export default async function AdminLayout({ children }) {
   const { data: aniversarios } = await supabase.rpc('admin_aniversarios')
   const aniversariosPendientes = (aniversarios || []).filter((a) => a.activo && a.dias <= 15 && !a.enviado_este).length
 
+  // Parejas que pidieron el diseño PRO y aún no se les activa
+  const { count: proPendientes } = await supabase
+    .from('couple_pro')
+    .select('couple_id', { count: 'exact', head: true })
+    .not('requested_at', 'is', null)
+    .is('unlocked_at', null)
+
   const { data: miBoda } = await supabase.from('couples').select('slug').eq('user_id', user.id).maybeSingle()
 
   return (
-    <AdminShell email={user.email} solicitudesNuevas={nuevas || 0} aniversariosPendientes={aniversariosPendientes} miBoda={miBoda?.slug || null}>
+    <AdminShell email={user.email} solicitudesNuevas={nuevas || 0} aniversariosPendientes={aniversariosPendientes} proPendientes={proPendientes || 0} miBoda={miBoda?.slug || null}>
       {children}
     </AdminShell>
   )

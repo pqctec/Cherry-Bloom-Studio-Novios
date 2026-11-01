@@ -1,14 +1,30 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { modelo as buscarModelo } from '@/lib/temas'
 import Icon from '@/components/Icon'
 import { soles } from '@/lib/escenarios'
-import { Badge, PageHeader, SearchInput, descargarCsv, fechaCorta } from '@/components/admin/ui'
+import { Badge, PageHeader, SearchInput, descargarCsv, fechaCorta, useToast } from '@/components/admin/ui'
 
 export default function ParejasAdmin({ parejas }) {
   const [busqueda, setBusqueda] = useState('')
   const [orden, setOrden] = useState('recientes')
   const hoy = new Date(new Date().toDateString())
+  const router = useRouter()
+  const toast = useToast()
+  const [cambiando, setCambiando] = useState(null)
+
+  async function alternarPro(p) {
+    setCambiando(p.id)
+    const { error } = await createClient().rpc('admin_activar_pro', { p_couple: p.id, p_activo: !p.pro_activo })
+    setCambiando(null)
+    if (error) return toast?.(error.message, 'error')
+    toast?.(p.pro_activo ? 'PRO desactivado' : 'PRO activado: su invitación ya muestra el diseño PRO')
+    router.refresh()
+  }
+  const solicitudesPro = parejas.filter((p) => p.pro_solicitado && !p.pro_activo).length
 
   const visibles = parejas
     .filter((p) => !busqueda || `${p.bride_name} ${p.groom_name} ${p.email || ''} ${p.venue || ''}`.toLowerCase().includes(busqueda.toLowerCase()))
@@ -29,7 +45,7 @@ export default function ParejasAdmin({ parejas }) {
     <div>
       <PageHeader
         title="Parejas"
-        description="Todas las parejas registradas, con sus confirmaciones, regalos y solicitudes."
+        description={`Todas las parejas registradas, con sus confirmaciones, regalos y solicitudes.${solicitudesPro ? ` ${solicitudesPro} esperando activación del PRO.` : ''}`}
         actions={
           <button onClick={exportar} className="btn-claro btn-sm bg-white">
             <Icon name="download" className="h-4 w-4" /> Exportar
@@ -47,7 +63,7 @@ export default function ParejasAdmin({ parejas }) {
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-arena-200 bg-white">
-        <table className="w-full min-w-[900px] text-sm">
+        <table className="w-full min-w-[1050px] text-sm">
           <thead>
             <tr className="border-b border-arena-200 text-left text-[11px] font-medium uppercase tracking-[0.14em] text-cacao-500">
               <th className="px-4 py-3">Pareja</th>
@@ -57,13 +73,14 @@ export default function ParejasAdmin({ parejas }) {
               <th className="px-4 py-3 text-right">Regalado</th>
               <th className="px-4 py-3 text-right">Fondos</th>
               <th className="px-4 py-3 text-center">Decoración</th>
+              <th className="px-4 py-3">Invitación</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y divide-arena-200/70">
             {visibles.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-14 text-center text-sm text-cacao-500">
+                <td colSpan={9} className="px-4 py-14 text-center text-sm text-cacao-500">
                   Todavía no hay parejas registradas.
                 </td>
               </tr>
@@ -92,6 +109,23 @@ export default function ParejasAdmin({ parejas }) {
                   <td className="px-4 py-3 whitespace-nowrap text-right text-cacao">{soles(p.valor_regalado)}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-right text-cacao">{soles(p.fondos_recaudados)}</td>
                   <td className="px-4 py-3 text-center">{p.solicitudes > 0 ? <Badge tono="alerta">{p.solicitudes}</Badge> : <span className="text-cacao-300">—</span>}</td>
+                  <td className="px-4 py-3">
+                    <p className="text-cacao">{p.modelo ? buscarModelo(p.modelo).nombre : 'Sin elegir'}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      {p.event_type === 'aniversario' && <Badge>Aniversario</Badge>}
+                      {p.pro_activo ? <Badge tono="ok">PRO activo</Badge> : p.pro_solicitado ? <Badge tono="alerta">PRO solicitado</Badge> : null}
+                      {(p.pro_solicitado || p.pro_activo || buscarModelo(p.modelo).pro) && (
+                        <button
+                          type="button"
+                          onClick={() => alternarPro(p)}
+                          disabled={cambiando === p.id}
+                          className="rounded-full border border-arena-300 px-2 py-0.5 text-[11px] font-medium text-cacao-700 hover:bg-arena disabled:opacity-50"
+                        >
+                          {p.pro_activo ? 'Desactivar' : 'Activar PRO'}
+                        </button>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <a href={`/boda/${p.slug}`} target="_blank" className="inline-flex rounded-lg p-2 text-cacao-500 hover:bg-arena hover:text-terracota" title="Ver página">
                       <Icon name="external" className="h-4 w-4" />

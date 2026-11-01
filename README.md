@@ -29,6 +29,7 @@ base de datos separada.
    12. `supabase/migracion_11_usuarios.sql` — usuarios y accesos desde /admin
    13. `supabase/migracion_12_crear_admin.sql` — crear cuentas de administrador desde /admin
    14. `supabase/migracion_13_invitaciones_y_aniversarios.sql` — aniversarios e invitaciones con modelo
+   15. `supabase/migracion_14_invitacion_pro.sql` — modelos PRO de pago (activación desde /admin)
 3. En **Authentication → Providers**, confirma que "Email" esté habilitado.
    Si quieres saltarte la confirmación por correo mientras pruebas, en
    **Authentication → Settings** puedes desactivar "Confirm email"
@@ -155,6 +156,13 @@ WhatsApp para cotizar está en `lib/escenarios.js` (`WHATSAPP_NOVIOS`).
   sobre animado, música, itinerario, dress code y hospedaje, con vista previa en vivo.
 - **Música:** los MP3 están en `public/musica/` (Pixabay, uso libre). Para agregar una canción, copia el archivo ahí
   y añade una línea en `lib/musica.js`.
+
+### Modelo PRO (de pago)
+
+- **Historia en fotos** es PRO (precio en `PRECIO_PRO`, `lib/temas.js`). La pareja lo elige, sube 2 fotos verticales y lo ve en
+  la vista previa; al pulsar *Activar PRO* se registra la solicitud y se abre WhatsApp contigo para el pago.
+- Hasta que lo actives, sus invitados ven el modelo *Clásica con foto*. Actívalo en **/admin → Parejas → Activar PRO**
+  (el menú muestra un contador con las solicitudes pendientes).
 
 ## Base de datos siempre activa
 

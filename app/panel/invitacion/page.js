@@ -15,6 +15,8 @@ export default async function MiInvitacionPage() {
     .eq('user_id', user.id)
     .maybeSingle()
 
+  const { data: pro } = await supabase.from('couple_pro').select('requested_at, unlocked_at').eq('couple_id', couple.id).maybeSingle()
+
   return (
     <div className="space-y-8">
       <link rel="stylesheet" href={todasLasFuentesHref()} precedence="default" />
@@ -29,7 +31,7 @@ export default async function MiInvitacionPage() {
       <a href={`/boda/${couple.slug}`} target="_blank" className="btn-claro btn-sm">
         <Icon name="external" className="h-4 w-4" /> Ver la invitación completa
       </a>
-      <EditorInvitacion couple={couple} />
+      <EditorInvitacion couple={couple} pro={pro || null} />
     </div>
   )
 }
