@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import Icon from '@/components/Icon'
+import CampoClave from '@/components/CampoClave'
 import { ToastProvider } from '@/components/admin/ui'
 import { createClient } from '@/lib/supabase/client'
 
@@ -152,11 +153,11 @@ function CambiarClave({ onClose }) {
           <>
             <label className="mt-4 block">
               <span className="etiqueta">Nueva contraseña</span>
-              <input type="password" value={clave} onChange={(e) => setClave(e.target.value)} className="campo bg-white" autoComplete="new-password" required />
+              <CampoClave value={clave} onChange={(e) => setClave(e.target.value)} className="campo bg-white" autoComplete="new-password" required />
             </label>
             <label className="mt-3 block">
               <span className="etiqueta">Repítela</span>
-              <input type="password" value={repetir} onChange={(e) => setRepetir(e.target.value)} className="campo bg-white" autoComplete="new-password" required />
+              <CampoClave value={repetir} onChange={(e) => setRepetir(e.target.value)} className="campo bg-white" autoComplete="new-password" required />
             </label>
             {estado.error && <p className="mt-3 text-sm text-terracota-800">{estado.error}</p>}
             <div className="mt-6 flex justify-end gap-2">

@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import AuthShell from '@/components/AuthShell'
+import CampoClave from '@/components/CampoClave'
 import { FOTOS } from '@/lib/escenarios'
 
 function LoginForm() {
@@ -57,7 +58,7 @@ function LoginForm() {
         </div>
         <div>
           <label className="etiqueta">Contraseña</label>
-          <input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="campo" />
+          <CampoClave required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
           <a href="/recuperar" className="mt-2 inline-block text-xs font-medium text-terracota underline">
             ¿Olvidaste tu contraseña?
           </a>

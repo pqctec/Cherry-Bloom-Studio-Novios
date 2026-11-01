@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import AuthShell from '@/components/AuthShell'
+import CampoClave from '@/components/CampoClave'
 
 function slugify(groomName, brideName) {
   const base = `${brideName}-y-${groomName}`
@@ -150,9 +151,9 @@ export default function RegistroPage() {
 
         <div>
           <label className="etiqueta">Contraseña</label>
-          <input
+          <CampoClave
             required
-            type="password"
+            autoComplete="new-password"
             minLength={6}
             value={form.password}
             onChange={update('password')}

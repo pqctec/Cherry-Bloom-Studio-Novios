@@ -81,7 +81,14 @@ export default function EditWeddingForm({ couple, privado }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form
+      onSubmit={handleSubmit}
+      // Enter dentro de un campo no guarda ni cierra el formulario: solo el botón "Guardar cambios".
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && e.target.tagName === 'INPUT') e.preventDefault()
+      }}
+      className="space-y-8"
+    >
       <div className="tarjeta max-w-xl space-y-5 p-6">
         <div>
           <h2 className="font-serif text-2xl font-semibold">¿Qué celebran?</h2>
@@ -115,12 +122,13 @@ export default function EditWeddingForm({ couple, privado }) {
               ¿Cuándo se casaron?
             </label>
             <input id="original" type="date" value={form.originalDate} onChange={update('originalDate')} className="campo" />
-            {aniosDeCasados(form.originalDate, form.weddingDate) && (
-              <p className="mt-2 text-sm text-terracota">
-                Celebran {aniosDeCasados(form.originalDate, form.weddingDate)} años
-                {nombreBodas(aniosDeCasados(form.originalDate, form.weddingDate)) ? ` · ${nombreBodas(aniosDeCasados(form.originalDate, form.weddingDate))}` : ''}
-              </p>
-            )}
+            <p className="mt-2 min-h-[20px] text-sm text-terracota">
+              {!form.weddingDate
+                ? 'Pongan también la fecha de la celebración (más abajo) para calcular los años.'
+                : aniosDeCasados(form.originalDate, form.weddingDate)
+                  ? `Celebran ${aniosDeCasados(form.originalDate, form.weddingDate)} años${nombreBodas(aniosDeCasados(form.originalDate, form.weddingDate)) ? ` · ${nombreBodas(aniosDeCasados(form.originalDate, form.weddingDate))}` : ''}`
+                  : ''}
+            </p>
           </div>
         )}
         <label className="flex items-start gap-3">

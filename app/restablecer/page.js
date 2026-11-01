@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import AuthShell from '@/components/AuthShell'
+import CampoClave from '@/components/CampoClave'
 import { FOTOS } from '@/lib/escenarios'
 
 // Paso 2 de "Olvidé mi contraseña": se llega desde el enlace del correo.
@@ -74,13 +75,13 @@ function Restablecer() {
             <label className="etiqueta" htmlFor="clave">
               Nueva contraseña
             </label>
-            <input id="clave" type="password" autoComplete="new-password" required value={clave} onChange={(e) => setClave(e.target.value)} className="campo" />
+            <CampoClave id="clave" autoComplete="new-password" required value={clave} onChange={(e) => setClave(e.target.value)} />
           </div>
           <div>
             <label className="etiqueta" htmlFor="repetir">
               Repítela
             </label>
-            <input id="repetir" type="password" autoComplete="new-password" required value={repetir} onChange={(e) => setRepetir(e.target.value)} className="campo" />
+            <CampoClave id="repetir" autoComplete="new-password" required value={repetir} onChange={(e) => setRepetir(e.target.value)} />
           </div>
           {estado.error && <p className="rounded-xl bg-rubor-100 px-4 py-3 text-sm text-terracota-800">{estado.error}</p>}
           <button type="submit" disabled={estado.guardando} className="btn-primario w-full">
