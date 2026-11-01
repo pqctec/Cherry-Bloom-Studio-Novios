@@ -64,6 +64,13 @@ export default function RegistroPage() {
       })
       if (signUpError) throw signUpError
 
+      // Supabase no avisa con error cuando el correo ya está registrado: devuelve
+      // un usuario sin identidades y NO envía correo. Lo detectamos y avisamos.
+      if (signUpData.user && Array.isArray(signUpData.user.identities) && signUpData.user.identities.length === 0) {
+        setError('Este correo ya tiene una cuenta. Inicien sesión con él (o usen otro correo para una nueva celebración).')
+        return
+      }
+
       if (!signUpData.session) {
         // Confirmación por correo activada: la cuenta y la boda ya existen,
         // solo falta que confirme el correo e inicie sesión.

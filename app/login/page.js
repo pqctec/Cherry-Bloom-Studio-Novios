@@ -58,6 +58,9 @@ function LoginForm() {
         <div>
           <label className="etiqueta">Contraseña</label>
           <input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="campo" />
+          <a href="/recuperar" className="mt-2 inline-block text-xs font-medium text-terracota underline">
+            ¿Olvidaste tu contraseña?
+          </a>
         </div>
 
         {error && <p className="rounded-xl bg-rubor-100 px-4 py-3 text-sm text-terracota-800">{error}</p>}
