@@ -73,7 +73,7 @@ function Clasica({ c, t, f, inv, invitacion, hayRegalos, portadaUrl }) {
         {(f || c.venue) && (
           <p className="font-serif text-xl sm:text-2xl">
             {f?.larga}
-            {inv.hora ? ` · ${inv.hora}` : ''}
+            {inv.hora ? ` · ${inv.horaTexto}` : ''}
             {c.venue ? <span className="block text-lg text-white/85">{c.venue}</span> : null}
           </p>
         )}
@@ -129,7 +129,7 @@ function Jardin({ c, t, f, inv, invitacion, hayRegalos }) {
         <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} />
         {c.venue && (
           <div>
-            <p className="t-eyebrow">{inv.hora ? `${inv.hora} · ` : ''}Ceremonia y recepción</p>
+            <p className="t-eyebrow">{inv.hora ? `${inv.horaTexto} · ` : ''}Ceremonia y recepción</p>
             <p className="t-display mt-1 text-2xl font-semibold">{c.venue}</p>
           </div>
         )}
@@ -182,7 +182,7 @@ function BlackTie({ c, t, f, inv, invitacion, hayRegalos }) {
           {c.venue && (
             <p className="text-xl leading-snug">
               {c.venue}
-              {inv.hora ? <span className="t-muted block text-lg">{inv.hora}</span> : null}
+              {inv.hora ? <span className="t-muted block text-lg">{inv.horaTexto}</span> : null}
             </p>
           )}
           <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} />
@@ -222,7 +222,7 @@ function Boho({ c, t, f, inv, invitacion, hayRegalos }) {
         {c.venue && (
           <p className="text-base">
             {c.venue}
-            {inv.hora ? <span className="t-muted"> · {inv.hora}</span> : null}
+            {inv.hora ? <span className="t-muted"> · {inv.horaTexto}</span> : null}
           </p>
         )}
         <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} />
@@ -266,7 +266,7 @@ function Editorial({ c, t, f, inv, invitacion, hayRegalos }) {
             <div>
               <span className="t-eyebrow">Cuándo</span>
               <span className="capitalize">{f.diaSemana}</span>
-              {inv.hora ? `, ${inv.hora}` : ''}
+              {inv.hora ? `, ${inv.horaTexto}` : ''}
             </div>
           )}
           {t.bodas && (
@@ -322,7 +322,7 @@ function Mar({ c, t, f, inv, invitacion, hayRegalos }) {
         )}
         {c.venue && (
           <div className="t-card w-full px-4 py-4">
-            <span className="t-eyebrow">{inv.hora ? `${inv.hora} · ` : ''}Lugar</span>
+            <span className="t-eyebrow">{inv.hora ? `${inv.horaTexto} · ` : ''}Lugar</span>
             <p className="t-display mt-1 text-xl">{c.venue}</p>
           </div>
         )}
@@ -365,7 +365,7 @@ function Olivo({ c, t, f, inv, invitacion, hayRegalos }) {
         {c.venue && (
           <p className="text-lg">
             {c.venue}
-            {inv.hora ? <span className="t-muted"> · {inv.hora}</span> : null}
+            {inv.hora ? <span className="t-muted"> · {inv.horaTexto}</span> : null}
           </p>
         )}
         <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} />
@@ -427,7 +427,7 @@ function Andino({ c, t, f, inv, invitacion, hayRegalos }) {
         )}
         {c.venue && (
           <div className="t-card w-full px-4 py-4" style={{ borderWidth: 1.5 }}>
-            <span className="t-eyebrow">{inv.hora ? `${inv.hora} · ` : ''}Lugar</span>
+            <span className="t-eyebrow">{inv.hora ? `${inv.horaTexto} · ` : ''}Lugar</span>
             <p className="t-display mt-1 text-xl">{c.venue}</p>
           </div>
         )}
@@ -467,7 +467,7 @@ function SobreSello({ c, t, f, inv, invitacion, hayRegalos, iniciales }) {
             <>
               <br />
               {c.venue}
-              {inv.hora ? ` · ${inv.hora}` : ''}
+              {inv.hora ? ` · ${inv.horaTexto}` : ''}
             </>
           )}
         </p>

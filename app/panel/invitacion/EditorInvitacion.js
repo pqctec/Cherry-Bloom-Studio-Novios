@@ -4,13 +4,14 @@ import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Icon from '@/components/Icon'
+import CampoHora from '@/components/CampoHora'
 import Portada from '@/components/invitacion/Portadas'
-import { PRECIO_PRO, MODELOS, modelo as buscarModelo, paleta as buscarPaleta, variablesTema, invitacionConDefectos, textosEvento, partesFecha, iniciales } from '@/lib/temas'
+import { PRECIO_PRO, MODELOS, modelo as buscarModelo, paleta as buscarPaleta, variablesTema, invitacionConDefectos, horaBonita, leerHora, textosEvento, partesFecha, iniciales } from '@/lib/temas'
 import { CANCIONES } from '@/lib/musica'
 import { escenario, linkWhatsApp } from '@/lib/escenarios'
 import { comprimir } from '@/lib/imagenes'
 
-const MAX_ITINERARIO = 8
+const MAX_ITINERARIO = 12
 const MAX_COLORES = 5
 
 export default function EditorInvitacion({ couple, pro = null }) {
@@ -20,7 +21,8 @@ export default function EditorInvitacion({ couple, pro = null }) {
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState(null)
   const [sonando, setSonando] = useState(null)
-  const [subiendo, setSubiendo] = useState(null) // índice de la foto que se está subiendo
+  const [subiendo, setSubiendo] = useState(null)
+  const [masivo, setMasivo] = useState({ abierto: false, texto: '', aviso: null }) // índice de la foto que se está subiendo
   const [proEstado, setProEstado] = useState(pro?.unlocked_at ? 'activo' : pro?.requested_at ? 'solicitado' : 'no')
   const audio = useRef(null)
 
@@ -49,6 +51,42 @@ export default function EditorInvitacion({ couple, pro = null }) {
   const setFila = (i, campo, valor) => set('itinerario', filas.map((f, j) => (j === i ? { ...f, [campo]: valor } : f)))
   const agregarFila = () => filas.length < MAX_ITINERARIO && set('itinerario', [...filas, { hora: '', titulo: '', lugar: '' }])
   const quitarFila = (i) => set('itinerario', filas.filter((_, j) => j !== i))
+
+  // Carga masiva: una línea por momento → "hora | actividad | lugar"
+  // (también sirve copiar 3 columnas desde Excel o Google Sheets).
+  function cargarMasivo(reemplazar) {
+    const nuevas = []
+    const errores = []
+    masivo.texto.split(/\r?\n/).forEach((linea, n) => {
+      if (!linea.trim()) return
+      const partes = linea.split(/\t|\||;/).map((x) => x.trim())
+      let [hora, titulo, lugar] = partes
+      let h = leerHora(hora)
+      if (!h && partes.length === 1) {
+        // Solo la actividad, o "4:00 pm Ceremonia" sin separador
+        const m = linea.trim().match(/^(\d{1,2}(?:[:.]\d{2})?\s*(?:[ap]\.?\s?m\.?)?)\s+(.+)$/i)
+        if (m && leerHora(m[1])) {
+          h = leerHora(m[1])
+          titulo = m[2]
+        } else {
+          titulo = linea.trim()
+        }
+        lugar = ''
+      } else if (!h && hora) {
+        errores.push(n + 1)
+        return
+      }
+      if (!titulo) return errores.push(n + 1)
+      nuevas.push({ hora: h, titulo: titulo.slice(0, 60), lugar: (lugar || '').slice(0, 80) })
+    })
+    const lista = [...(reemplazar ? [] : filas), ...nuevas].slice(0, MAX_ITINERARIO)
+    set('itinerario', lista)
+    setMasivo({
+      abierto: errores.length > 0,
+      texto: errores.length ? masivo.texto : '',
+      aviso: `${nuevas.length} ${nuevas.length === 1 ? 'momento agregado' : 'momentos agregados'}${errores.length ? `. Revisa la hora en la(s) línea(s) ${errores.join(', ')}.` : '.'}`,
+    })
+  }
 
   // Dress code
   const colores = inv.dresscode.colores
@@ -96,6 +134,7 @@ export default function EditorInvitacion({ couple, pro = null }) {
       paleta: inv.paleta,
       frase: inv.frase.trim().slice(0, 160),
       hora: inv.hora,
+      colores: inv.paleta === 'propia' ? inv.colores : undefined,
       musica: inv.musica,
       sobre: !!inv.sobre,
       itinerario: filas
@@ -258,7 +297,40 @@ export default function EditorInvitacion({ couple, pro = null }) {
                 </button>
               )
             })}
+            {m.personalizable && (
+              <button
+                type="button"
+                onClick={() => set('paleta', 'propia')}
+                aria-pressed={inv.paleta === 'propia'}
+                className={`flex items-center gap-2.5 rounded-full border py-1.5 pl-1.5 pr-4 text-sm transition ${inv.paleta === 'propia' ? 'border-terracota bg-rubor-100 text-terracota-800' : 'border-dashed border-arena-300 bg-white text-cacao-700 hover:bg-arena'}`}
+              >
+                <span className="flex h-8 w-8 overflow-hidden rounded-full border border-black/10" style={{ background: 'conic-gradient(#e8b4b0, #f2c48d, #c9d6b8, #b9c8e0, #d9b8d6, #e8b4b0)' }} />
+                Personalizada
+              </button>
+            )}
           </div>
+          {m.personalizable && inv.paleta === 'propia' && (
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              {[
+                ['soft', 'Sobre y fondos'],
+                ['accent', 'Sello y detalles'],
+                ['boton', 'Botones'],
+              ].map(([k, l]) => (
+                <label key={k} className="flex items-center gap-3 rounded-2xl border border-arena-200 bg-white/70 p-3">
+                  <input
+                    type="color"
+                    value={inv.colores[k]}
+                    onChange={(e) => set('colores', { ...inv.colores, [k]: e.target.value })}
+                    className="h-11 w-11 shrink-0 cursor-pointer rounded-full border border-arena-300 bg-white p-1"
+                  />
+                  <span>
+                    <span className="block text-sm font-medium text-cacao">{l}</span>
+                    <span className="block font-mono text-[11px] uppercase text-cacao-500">{inv.colores[k]}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Textos */}
@@ -278,11 +350,12 @@ export default function EditorInvitacion({ couple, pro = null }) {
             />
             <p className="mt-1 text-[11px] text-cacao-500">Si la dejan vacía, usamos una frase propia del modelo.</p>
           </div>
-          <div className="max-w-[200px]">
+          <div>
             <label className="etiqueta" htmlFor="hora">
               Hora de inicio
             </label>
-            <input id="hora" type="time" value={inv.hora} onChange={(e) => set('hora', e.target.value)} className="campo" />
+            <CampoHora id="hora" etiqueta="Hora de inicio" value={inv.hora} onChange={(v) => set('hora', v)} />
+            {inv.hora && <p className="mt-1 text-[11px] text-cacao-500">En la invitación se verá: {horaBonita(inv.hora)}</p>}
           </div>
           <p className="text-xs text-cacao-500">
             Nombres, fecha, lugar y el mensaje largo se editan en <a href="/panel/configuracion" className="text-terracota underline">Nuestra página</a>.
@@ -347,19 +420,48 @@ export default function EditorInvitacion({ couple, pro = null }) {
             <p className="text-xs text-cacao-500">Ceremonia, cóctel, cena, fiesta… hasta {MAX_ITINERARIO} momentos.</p>
           </div>
           {filas.map((f, i) => (
-            <div key={i} className="grid grid-cols-[132px_minmax(0,1fr)_44px] gap-2 rounded-2xl border border-arena-200 bg-white/60 p-2">
-              <input type="time" aria-label="Hora" value={f.hora} onChange={(e) => setFila(i, 'hora', e.target.value)} className="campo" />
-              <input aria-label="Momento" value={f.titulo} maxLength={60} onChange={(e) => setFila(i, 'titulo', e.target.value)} className="campo" placeholder="Ceremonia" />
-              <button type="button" onClick={() => quitarFila(i)} aria-label="Quitar momento" className="flex h-11 items-center justify-center rounded-xl text-cacao-500 hover:bg-rubor-100 hover:text-terracota-800">
+            <div key={i} className="flex flex-wrap items-center gap-2 rounded-2xl border border-arena-200 bg-white/60 p-2">
+              <CampoHora etiqueta={`Hora del momento ${i + 1}`} value={f.hora} onChange={(v) => setFila(i, 'hora', v)} />
+              <input aria-label="Momento" value={f.titulo} maxLength={60} onChange={(e) => setFila(i, 'titulo', e.target.value)} className="campo min-w-[160px] flex-1" placeholder="Ceremonia" />
+              <button type="button" onClick={() => quitarFila(i)} aria-label="Quitar momento" className="flex h-11 w-11 items-center justify-center rounded-xl text-cacao-500 hover:bg-rubor-100 hover:text-terracota-800">
                 <Icon name="trash" className="h-4 w-4" />
               </button>
-              <input aria-label="Lugar" value={f.lugar} maxLength={80} onChange={(e) => setFila(i, 'lugar', e.target.value)} className="campo col-span-2" placeholder="Lugar (opcional)" />
+              <input aria-label="Lugar" value={f.lugar} maxLength={80} onChange={(e) => setFila(i, 'lugar', e.target.value)} className="campo w-full" placeholder="Lugar (opcional)" />
             </div>
           ))}
-          {filas.length < MAX_ITINERARIO && (
-            <button type="button" onClick={agregarFila} className="btn-claro btn-sm">
-              <Icon name="plus" className="h-4 w-4" /> Agregar momento
+          <div className="flex flex-wrap gap-2">
+            {filas.length < MAX_ITINERARIO && (
+              <button type="button" onClick={agregarFila} className="btn-claro btn-sm">
+                <Icon name="plus" className="h-4 w-4" /> Agregar momento
+              </button>
+            )}
+            <button type="button" onClick={() => setMasivo((v) => ({ ...v, abierto: !v.abierto, aviso: null }))} className="btn-claro btn-sm">
+              <Icon name="copy" className="h-4 w-4" /> Pegar varios a la vez
             </button>
+          </div>
+          {masivo.aviso && <p className="text-sm text-salvia">{masivo.aviso}</p>}
+          {masivo.abierto && (
+            <div className="space-y-3 rounded-2xl border border-arena-200 bg-crema p-4">
+              <p className="text-sm text-cacao">
+                Escriban <b>un momento por línea</b>: <code className="rounded bg-white px-1.5 py-0.5 text-xs">hora | actividad | lugar</code>. El lugar es
+                opcional. También pueden copiar 3 columnas desde Excel o Google Sheets y pegarlas aquí.
+              </p>
+              <textarea
+                rows={6}
+                value={masivo.texto}
+                onChange={(e) => setMasivo((v) => ({ ...v, texto: e.target.value }))}
+                className="campo font-mono text-xs"
+                placeholder={'4:00 pm | Ceremonia religiosa | Capilla de la hacienda\n5:30 pm | Cóctel de bienvenida | Jardín\n7:00 pm | Recepción y cena | Salón principal\n9:00 pm | Primer baile\n10:00 pm | Fiesta'}
+              />
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => cargarMasivo(false)} disabled={!masivo.texto.trim()} className="btn-primario btn-sm">
+                  Agregar a la lista
+                </button>
+                <button type="button" onClick={() => cargarMasivo(true)} disabled={!masivo.texto.trim()} className="btn-claro btn-sm">
+                  Reemplazar la lista
+                </button>
+              </div>
+            </div>
           )}
         </section>
 
@@ -433,12 +535,12 @@ export default function EditorInvitacion({ couple, pro = null }) {
       <aside className="xl:sticky xl:top-24 xl:self-start">
         <p className="mb-2 text-center text-xs font-medium uppercase tracking-[0.2em] text-cacao-500">Vista previa · así la ve su invitado</p>
         <div className="mx-auto w-[360px] max-w-full overflow-hidden rounded-[36px] border-[10px] border-cacao bg-cacao shadow-suave">
-          <div className="tema vista-previa h-[640px] overflow-y-auto" data-modelo={m.id} style={variablesTema(m.id, inv.paleta)}>
+          <div className="tema vista-previa h-[640px] overflow-y-auto" data-modelo={m.id} style={variablesTema(m.id, inv.paleta, inv.colores)}>
             <Portada
               c={coupleVista}
               t={t}
               f={partesFecha(couple.wedding_date)}
-              inv={inv}
+              inv={{ ...inv, horaTexto: horaBonita(inv.hora) }}
               invitacion={demoInvitacion}
               hayRegalos={couple.gifts_enabled !== false}
               portadaUrl={fotoPropia || escenario(couple.cover_theme).url}

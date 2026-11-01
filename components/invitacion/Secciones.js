@@ -1,3 +1,5 @@
+import { horaBonita } from '@/lib/temas'
+
 // Secciones de la invitación después de la portada. Usan los colores del
 // modelo (variables --t-*), así combinan con cualquier diseño.
 
@@ -45,7 +47,7 @@ export function Itinerario({ items }) {
               className="t-display flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
               style={{ background: 'var(--t-card)', border: '1px solid var(--t-accent)', color: 'var(--t-accent)' }}
             >
-              {it.hora || '•'}
+              {horaBonita(it.hora).replace(' ', '\u00a0') || it.hora || '•'}
             </span>
             <div className="pt-2">
               <p className="t-display text-2xl leading-tight">{it.titulo}</p>

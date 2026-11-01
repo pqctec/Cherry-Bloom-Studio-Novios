@@ -27,7 +27,7 @@ export default function InvitacionPublica({ couple, invitacion, regalos, codigo,
   const nombres = `${couple.bride_name} & ${couple.groom_name}`
 
   return (
-    <main className="tema min-h-screen" data-modelo={m.id} style={variablesTema(m.id, inv.paleta)}>
+    <main className="tema min-h-screen" data-modelo={m.id} style={variablesTema(m.id, inv.paleta, inv.colores)}>
       {fuentes && <link rel="stylesheet" href={fuentes} precedence="default" />}
       {inv.sobre && !vistaPrevia && <Sobre iniciales={iniciales(couple)} para={invitacion?.name} estilo={m.id === 'historia' ? 'puertas' : 'clasico'} />}
       {musica && <Musica url={musica.url} nombre={musica.nombre} />}
