@@ -114,14 +114,14 @@ export default function ParejasAdmin({ parejas }) {
                     <div className="mt-1 flex flex-wrap items-center gap-1.5">
                       {p.event_type === 'aniversario' && <Badge>Aniversario</Badge>}
                       {p.pro_activo ? <Badge tono="ok">PRO activo</Badge> : p.pro_solicitado ? <Badge tono="alerta">PRO solicitado</Badge> : null}
-                      {(p.pro_solicitado || p.pro_activo || buscarModelo(p.modelo).pro) && (
+                      {(
                         <button
                           type="button"
                           onClick={() => alternarPro(p)}
                           disabled={cambiando === p.id}
                           className="rounded-full border border-arena-300 px-2 py-0.5 text-[11px] font-medium text-cacao-700 hover:bg-arena disabled:opacity-50"
                         >
-                          {p.pro_activo ? 'Desactivar' : 'Activar PRO'}
+                          {p.pro_activo ? 'Desactivar PRO' : 'Activar PRO'}
                         </button>
                       )}
                     </div>

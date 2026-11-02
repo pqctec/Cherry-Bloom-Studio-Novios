@@ -46,7 +46,7 @@ export default function InvitacionPublica({ couple, invitacion, regalos, codigo,
 
       {m.id !== 'clasica' && m.id !== 'historia' && <Foto url={fotoPropia} nombres={nombres} />}
       <Mensaje texto={couple.cover_message} firma={nombres} />
-      <Itinerario items={inv.itinerario} />
+      {m.id !== 'historia' && <Itinerario items={inv.itinerario} />}
       <DressCode dresscode={inv.dresscode} />
       <Ubicacion venue={couple.venue} hospedaje={inv.hospedaje} />
 

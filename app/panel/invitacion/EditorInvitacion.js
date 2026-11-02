@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import Icon from '@/components/Icon'
 import CampoHora from '@/components/CampoHora'
 import Portada from '@/components/invitacion/Portadas'
+import { Itinerario, DressCode } from '@/components/invitacion/Secciones'
 import { PRECIO_PRO, MODELOS, modelo as buscarModelo, paleta as buscarPaleta, variablesTema, invitacionConDefectos, horaBonita, leerHora, textosEvento, partesFecha, iniciales } from '@/lib/temas'
 import { CANCIONES } from '@/lib/musica'
 import { escenario, linkWhatsApp } from '@/lib/escenarios'
@@ -94,23 +95,54 @@ export default function EditorInvitacion({ couple, pro = null }) {
 
   async function subirFoto(i, file) {
     if (!file) return
-    if (!file.type.startsWith('image/')) return setError('El archivo debe ser una foto (JPG, PNG o WEBP).')
+    const esVideo = file.type.startsWith('video/')
+    if (esVideo && i !== 0) return setError('El video va en la portada (primer recuadro).')
+    if (!esVideo && !file.type.startsWith('image/')) return setError('El archivo debe ser una foto (JPG, PNG, WEBP) o un video corto (MP4, MOV).')
     setError(null)
     setSubiendo(i)
     try {
-      const datos = await comprimir(file, 2000)
-      const ruta = `${couple.id}/pro-${i + 1}-${Date.now()}.jpg`
-      const { error: err } = await supabase.storage.from('portadas').upload(ruta, datos, { contentType: 'image/jpeg', cacheControl: '31536000' })
+      let datos = file
+      let ruta
+      let tipo = file.type
+      if (esVideo) {
+        if (file.size > 30 * 1024 * 1024) throw new Error('El video pesa más de 30 MB. Usen uno más corto (máximo 15 segundos).')
+        const dur = await duracionVideo(file)
+        if (dur > 20) throw new Error(`El video dura ${Math.round(dur)} segundos. Recórtenlo a 15 segundos o menos.`)
+        const ext = (file.name.split('.').pop() || 'mp4').toLowerCase().replace(/[^a-z0-9]/g, '') || 'mp4'
+        ruta = `${couple.id}/pro-video-${Date.now()}.${ext}`
+      } else {
+        datos = await comprimir(file, 2000)
+        tipo = 'image/jpeg'
+        ruta = `${couple.id}/pro-${i + 1}-${Date.now()}.jpg`
+      }
+      const { error: err } = await supabase.storage.from('portadas').upload(ruta, datos, { contentType: tipo, cacheControl: '31536000' })
       if (err) throw err
       const { data } = supabase.storage.from('portadas').getPublicUrl(ruta)
-      const fotos = [...inv.fotos]
-      fotos[i] = data.publicUrl
-      set('fotos', fotos.filter(Boolean))
+      if (esVideo) {
+        set('video', data.publicUrl)
+      } else {
+        const fotos = [...inv.fotos]
+        fotos[i] = data.publicUrl
+        setInv((v) => ({ ...v, fotos, ...(i === 0 ? { video: '' } : {}) }))
+      }
     } catch (e) {
-      setError(e.message || 'No pudimos subir la foto.')
+      setError(e.message || 'No pudimos subir el archivo.')
     } finally {
       setSubiendo(null)
     }
+  }
+
+  function duracionVideo(file) {
+    return new Promise((ok) => {
+      const v = document.createElement('video')
+      v.preload = 'metadata'
+      v.onloadedmetadata = () => {
+        URL.revokeObjectURL(v.src)
+        ok(v.duration || 0)
+      }
+      v.onerror = () => ok(0)
+      v.src = URL.createObjectURL(file)
+    })
   }
 
   async function pedirPro() {
@@ -143,6 +175,7 @@ export default function EditorInvitacion({ couple, pro = null }) {
       dresscode: { texto: inv.dresscode.texto.trim().slice(0, 80), colores },
       hospedaje: inv.hospedaje.trim().slice(0, 500),
       fotos: inv.fotos,
+      video: inv.video,
       contacto: inv.contacto.trim().slice(0, 80),
     }
     const { error: err } = await supabase.from('couples').update({ invite: limpio }).eq('id', couple.id)
@@ -244,27 +277,40 @@ export default function EditorInvitacion({ couple, pro = null }) {
               </p>
             )}
             <div>
-              <p className="etiqueta">Sus fotos (verticales, como para historia de Instagram)</p>
+              <p className="etiqueta">Portada (video corto o foto) y foto de “Los detalles”</p>
               <div className="grid max-w-md grid-cols-2 gap-3">
-                {[0, 1].map((i) => (
-                  <label key={i} className="relative flex aspect-[3/4] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-arena-300 bg-white text-center hover:border-terracota">
-                    {inv.fotos[i] ? (
-                      <img src={inv.fotos[i]} alt={`Foto ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" />
-                    ) : (
-                      <span className="px-3 text-xs text-cacao-500">
-                        <Icon name="upload" className="mx-auto mb-2 h-6 w-6 text-terracota" />
-                        {i === 0 ? 'Foto de portada' : 'Foto de “Los detalles”'}
-                      </span>
-                    )}
-                    {subiendo === i && <span className="absolute inset-0 flex items-center justify-center bg-white/80 text-sm text-cacao">Subiendo…</span>}
-                    {inv.fotos[i] && subiendo !== i && (
-                      <span className="absolute inset-x-2 bottom-2 rounded-full bg-black/55 py-1 text-[11px] text-white">Cambiar foto</span>
-                    )}
-                    <input type="file" accept="image/*" className="sr-only" onChange={(e) => subirFoto(i, e.target.files?.[0])} />
-                  </label>
-                ))}
+                {[0, 1].map((i) => {
+                  const video = i === 0 && inv.video
+                  const tiene = video || inv.fotos[i]
+                  return (
+                    <div key={i} className="space-y-1.5">
+                      <label className="relative flex aspect-[3/4] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-arena-300 bg-white text-center hover:border-terracota">
+                        {video ? (
+                          <video src={inv.video} muted autoPlay loop playsInline className="absolute inset-0 h-full w-full object-cover" />
+                        ) : inv.fotos[i] ? (
+                          <img src={inv.fotos[i]} alt={`Foto ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" />
+                        ) : (
+                          <span className="px-3 text-xs text-cacao-500">
+                            <Icon name="upload" className="mx-auto mb-2 h-6 w-6 text-terracota" />
+                            {i === 0 ? 'Video corto o foto de portada' : 'Foto de “Los detalles”'}
+                          </span>
+                        )}
+                        {subiendo === i && <span className="absolute inset-0 flex items-center justify-center bg-white/80 text-sm text-cacao">Subiendo…</span>}
+                        {tiene && subiendo !== i && (
+                          <span className="absolute inset-x-2 bottom-2 rounded-full bg-black/55 py-1 text-[11px] text-white">{video ? 'Cambiar video' : 'Cambiar'}</span>
+                        )}
+                        <input type="file" accept={i === 0 ? 'image/*,video/mp4,video/quicktime,video/webm' : 'image/*'} className="sr-only" onChange={(e) => subirFoto(i, e.target.files?.[0])} />
+                      </label>
+                      {video && (
+                        <button type="button" onClick={() => set('video', '')} className="w-full text-[11px] text-cacao-500 underline hover:text-terracota">
+                          Quitar video (usar foto)
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
-              <p className="mt-2 text-[11px] text-cacao-500">Recomendado: fotos verticales de al menos 1080 × 1600 px. Si no suben fotos, usamos paisajes de ejemplo.</p>
+              <p className="mt-2 text-[11px] text-cacao-500">Video: vertical, de 5 a 15 segundos (MP4 o MOV, máx. 30 MB); se reproduce en bucle y sin sonido, la música sigue sonando. Fotos: verticales, de al menos 1080 × 1600 px. Si no suben nada, usamos paisajes de ejemplo.</p>
             </div>
             <div>
               <label className="etiqueta" htmlFor="contacto">
@@ -536,6 +582,24 @@ export default function EditorInvitacion({ couple, pro = null }) {
         <p className="mb-2 text-center text-xs font-medium uppercase tracking-[0.2em] text-cacao-500">Vista previa · así la ve su invitado</p>
         <div className="mx-auto w-[360px] max-w-full overflow-hidden rounded-[36px] border-[10px] border-cacao bg-cacao shadow-suave">
           <div className="tema vista-previa h-[640px] overflow-y-auto" data-modelo={m.id} style={variablesTema(m.id, inv.paleta, inv.colores)}>
+            {m.id === 'historia' && inv.sobre && (
+              <div className="relative flex h-[640px] flex-col items-center justify-center gap-5 text-center" style={{ background: 'var(--t-soft)' }}>
+                <svg aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
+                  <path d="M0 0 L50 50 L0 100 M100 0 L50 50 L100 100" fill="none" stroke="rgba(0,0,0,.14)" strokeWidth="0.4" />
+                  <path d="M50 0 V100" stroke="rgba(0,0,0,.18)" strokeWidth="0.4" />
+                </svg>
+                <p className="relative text-sm tracking-[0.2em] text-white/90" style={{ fontFamily: 'var(--t-display)' }}>
+                  FAMILIA RODRÍGUEZ
+                </p>
+                <span
+                  className="relative flex h-24 w-24 items-center justify-center rounded-full text-2xl"
+                  style={{ background: 'radial-gradient(circle at 35% 30%, #F4DE96, var(--t-accent) 55%, #7A5E1F)', color: '#5A4413', fontFamily: 'var(--t-script)', boxShadow: '0 10px 24px rgba(0,0,0,.35)' }}
+                >
+                  {iniciales(couple).replace('&', '')}
+                </span>
+                <p className="relative text-[10px] uppercase tracking-[0.3em] text-white/80">Sobre de apertura · baja para ver más</p>
+              </div>
+            )}
             <Portada
               c={coupleVista}
               t={t}
@@ -546,6 +610,8 @@ export default function EditorInvitacion({ couple, pro = null }) {
               portadaUrl={fotoPropia || escenario(couple.cover_theme).url}
               iniciales={iniciales(couple)}
             />
+            {m.id !== 'historia' && <Itinerario items={inv.itinerario.filter((x) => x.titulo)} />}
+            <DressCode dresscode={inv.dresscode} />
           </div>
         </div>
         <p className="mt-2 text-center text-[11px] text-cacao-500">Ejemplo con “Familia Rodríguez · 4 pases”.</p>
