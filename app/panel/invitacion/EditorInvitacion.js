@@ -151,7 +151,7 @@ export default function EditorInvitacion({ couple, pro = null }) {
     setProEstado('solicitado')
     window.open(
       linkWhatsApp(
-        `Hola Cherry Bloom Studio 💍 Quiero activar el diseño PRO "Historia en fotos" (${PRECIO_PRO}) para la invitación de ${couple.bride_name} y ${couple.groom_name} (${couple.slug}). ¿Cómo hago el pago?`
+        `Hola Cherry Bloom Studio 💍 Quiero activar la invitación PRO (${PRECIO_PRO}) con el modelo "${m.nombre}" para la invitación de ${couple.bride_name} y ${couple.groom_name} (${couple.slug}). ¿Cómo hago el pago?`
       ),
       '_blank'
     )
@@ -199,7 +199,7 @@ export default function EditorInvitacion({ couple, pro = null }) {
         {/* Modelo */}
         <section className="tarjeta p-6">
           <h2 className="font-serif text-2xl font-semibold">1. Modelo</h2>
-          <p className="mb-4 text-xs text-cacao-500">Todos son gratis, menos los marcados PRO. Pueden cambiarlo cuando quieran.</p>
+          <p className="mb-4 text-xs text-cacao-500">Clásica con foto, Jardín acuarela y Editorial minimal son gratis. Los marcados PRO se pueden probar aquí y se activan con un pago único.</p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {MODELOS.map((mo) => {
               const p = mo.paletas[0]
@@ -215,13 +215,13 @@ export default function EditorInvitacion({ couple, pro = null }) {
                   <div
                     className="flex h-28 flex-col items-center justify-center gap-1"
                     style={{
-                      background: mo.id === 'clasica' ? `linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.45)), url(${escenario(couple.cover_theme).mini}) center/cover` : mo.pro ? p.soft : mo.base.bg,
-                      color: mo.id === 'clasica' || mo.pro ? '#fff' : mo.base.text,
+                      background: mo.id === 'clasica' ? `linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.45)), url(${escenario(couple.cover_theme).mini}) center/cover` : mo.id === 'historia' ? p.soft : mo.base.bg,
+                      color: mo.id === 'clasica' || mo.id === 'historia' ? '#fff' : mo.base.text,
                     }}
                   >
                     {mo.id === 'andino' && <span className="absolute inset-x-0 top-0 h-2.5" style={{ background: `repeating-linear-gradient(90deg, ${p.accent} 0 14px, #E3A82B 14px 20px, #1F7A72 20px 26px)` }} />}
-                    <span className="text-3xl leading-none" style={mo.pro ? { fontFamily: mo.script, color: '#5A4413', background: 'radial-gradient(circle at 35% 30%, #F4DE96, #B8963E 55%, #7A5E1F)', borderRadius: 999, width: 56, height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 } : { fontFamily: mo.script, color: mo.id === 'clasica' ? '#fff' : p.accent }}>
-                      {mo.pro ? `${(couple.bride_name || 'A')[0]}${(couple.groom_name || 'B')[0]}` : `${(couple.bride_name || 'A')[0]} & ${(couple.groom_name || 'B')[0]}`}
+                    <span className="text-3xl leading-none" style={mo.id === 'historia' ? { fontFamily: mo.script, color: '#5A4413', background: 'radial-gradient(circle at 35% 30%, #F4DE96, #B8963E 55%, #7A5E1F)', borderRadius: 999, width: 56, height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 } : { fontFamily: mo.script, color: mo.id === 'clasica' ? '#fff' : p.accent }}>
+                      {mo.id === 'historia' ? `${(couple.bride_name || 'A')[0]}${(couple.groom_name || 'B')[0]}` : `${(couple.bride_name || 'A')[0]} & ${(couple.groom_name || 'B')[0]}`}
                     </span>
                     <span className="text-[10px] uppercase tracking-[0.25em] opacity-80" style={{ fontFamily: mo.display }}>
                       {t.aniversario ? 'Aniversario' : 'Nos casamos'}
@@ -257,7 +257,7 @@ export default function EditorInvitacion({ couple, pro = null }) {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="font-serif text-2xl font-semibold">Diseño PRO · {PRECIO_PRO}</h2>
-                <p className="text-xs text-cacao-500">Pago único por su celebración. Pueden probarlo y verlo aquí antes de pagar.</p>
+                <p className="text-xs text-cacao-500">Pago único por su celebración: desbloquea todos los modelos PRO y la sección 7 (qué mostrar y textos). Pueden probarlo aquí antes de pagar.</p>
               </div>
               {proEstado === 'activo' ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-salvia-100 px-3 py-1.5 text-sm font-medium text-salvia">
@@ -275,10 +275,12 @@ export default function EditorInvitacion({ couple, pro = null }) {
             </div>
             {proEstado !== 'activo' && (
               <p className="rounded-xl bg-oro-100 px-4 py-3 text-sm text-cacao">
-                Mientras no esté activo, sus invitados verán el modelo <b>Clásica con foto</b>. Al confirmar su pago lo activamos y la
+                Mientras no esté activo, sus invitados verán el modelo gratuito <b>Clásica con foto</b>, sin las opciones PRO. Al confirmar su pago lo activamos y la
                 invitación cambia sola.
               </p>
             )}
+            {m.id === 'historia' && (
+            <>
             <div>
               <p className="etiqueta">Portada (video corto o foto) y foto de “Los detalles”</p>
               <div className="grid max-w-md grid-cols-2 gap-3">
@@ -321,6 +323,8 @@ export default function EditorInvitacion({ couple, pro = null }) {
               </label>
               <input id="contacto" value={inv.contacto} maxLength={80} onChange={(e) => set('contacto', e.target.value)} className="campo" placeholder="WhatsApp 987 654 321" />
             </div>
+            </>
+            )}
           </section>
         )}
 
@@ -574,10 +578,24 @@ export default function EditorInvitacion({ couple, pro = null }) {
 
         {/* Qué mostrar y textos */}
         <section className="tarjeta space-y-5 p-6">
-          <div>
-            <h2 className="font-serif text-2xl font-semibold">7. Qué mostrar y textos</h2>
-            <p className="text-xs text-cacao-500">Apaguen lo que no quieran en su invitación y cambien los textos fijos. Vacío = texto del modelo.</p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="flex items-center gap-2 font-serif text-2xl font-semibold">
+                7. Qué mostrar y textos <span className="rounded-full bg-cacao px-2 py-0.5 font-sans text-[10px] font-semibold tracking-wider text-oro-300">PRO</span>
+              </h2>
+              <p className="text-xs text-cacao-500">Apaguen lo que no quieran en su invitación y cambien los textos fijos. Vacío = texto del modelo.</p>
+            </div>
+            {proEstado !== 'activo' && (
+              <button type="button" onClick={pedirPro} className="btn-primario btn-sm">
+                {proEstado === 'solicitado' ? 'Solicitud enviada · escribir de nuevo' : `Activar PRO por ${PRECIO_PRO}`}
+              </button>
+            )}
           </div>
+          {proEstado !== 'activo' && (
+            <p className="rounded-xl bg-oro-100 px-4 py-3 text-sm text-cacao">
+              Disponible con la invitación PRO. Pueden probarlo en la vista previa; sus invitados lo verán cuando el PRO esté activo.
+            </p>
+          )}
           <div className="grid gap-2 sm:grid-cols-2">
             {SECCIONES.filter((x) => aplicaA(x, m.id)).map((x) => (
               <label key={x.id} className="flex items-center justify-between gap-3 rounded-xl border border-arena-200 bg-white/70 px-4 py-3">

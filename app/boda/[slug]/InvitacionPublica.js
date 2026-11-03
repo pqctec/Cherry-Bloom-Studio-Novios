@@ -12,9 +12,14 @@ import Invitado from './Invitado'
 export default function InvitacionPublica({ couple, invitacion, regalos, codigo, codigoInvalido, limiteISO, slug, vistaPrevia = false, proActivo = false }) {
   const inv = invitacionConDefectos(couple.invite || {}, couple)
   // Un modelo PRO solo se muestra a los invitados cuando está pagado/activado.
-  if (modelo(inv.modelo).pro && !proActivo) {
-    inv.modelo = 'clasica'
-    inv.paleta = 'terracota'
+  if (!proActivo) {
+    if (modelo(inv.modelo).pro) {
+      inv.modelo = 'clasica'
+      inv.paleta = 'terracota'
+    }
+    // "Qué mostrar y textos" también es PRO: sin activar, todo se muestra con los textos del modelo.
+    inv.mostrar = Object.fromEntries(Object.keys(inv.mostrar).map((k) => [k, true]))
+    inv.textos = Object.fromEntries(Object.keys(inv.textos).map((k) => [k, '']))
   }
   const m = modelo(inv.modelo)
   const t0 = textosEvento(couple)
