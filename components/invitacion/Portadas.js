@@ -82,7 +82,7 @@ function Clasica({ c, t, f, inv, invitacion, hayRegalos, portadaUrl }) {
             Hemos reservado <b>{invitacion.passes}</b> {invitacion.passes === 1 ? 'lugar' : 'lugares'} para ustedes
           </p>
         ) : null}
-        <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} variante="foto" />
+        <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} oculto={inv.mostrar?.cuenta === false} variante="foto" />
         <div className="mt-2 w-full">
           <Acciones invitacion={invitacion} hayRegalos={hayRegalos} venue={c.venue} sobreFoto />
         </div>
@@ -126,7 +126,7 @@ function Jardin({ c, t, f, inv, invitacion, hayRegalos }) {
             <span className="h-px w-10" style={{ background: 'var(--t-line)' }} />
           </div>
         )}
-        <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} />
+        <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} oculto={inv.mostrar?.cuenta === false} />
         {c.venue && (
           <div>
             <p className="t-eyebrow">{inv.hora ? `${inv.horaTexto} · ` : ''}Ceremonia y recepción</p>
@@ -185,7 +185,7 @@ function BlackTie({ c, t, f, inv, invitacion, hayRegalos }) {
               {inv.hora ? <span className="t-muted block text-lg">{inv.horaTexto}</span> : null}
             </p>
           )}
-          <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} />
+          <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} oculto={inv.mostrar?.cuenta === false} />
           <Pases invitacion={invitacion} />
           <Acciones invitacion={invitacion} hayRegalos={hayRegalos} venue={c.venue} />
         </div>
@@ -225,7 +225,7 @@ function Boho({ c, t, f, inv, invitacion, hayRegalos }) {
             {inv.hora ? <span className="t-muted"> · {inv.horaTexto}</span> : null}
           </p>
         )}
-        <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} />
+        <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} oculto={inv.mostrar?.cuenta === false} />
         <Pases invitacion={invitacion} />
         <Acciones invitacion={invitacion} hayRegalos={hayRegalos} venue={c.venue} />
       </div>
@@ -282,7 +282,7 @@ function Editorial({ c, t, f, inv, invitacion, hayRegalos }) {
             </div>
           ) : null}
         </div>
-        <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} />
+        <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} oculto={inv.mostrar?.cuenta === false} />
         <Acciones invitacion={invitacion} hayRegalos={hayRegalos} venue={c.venue} centrado={false} />
       </div>
     </section>
@@ -326,7 +326,7 @@ function Mar({ c, t, f, inv, invitacion, hayRegalos }) {
             <p className="t-display mt-1 text-xl">{c.venue}</p>
           </div>
         )}
-        <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} />
+        <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} oculto={inv.mostrar?.cuenta === false} />
         <Pases invitacion={invitacion} />
         <Acciones invitacion={invitacion} hayRegalos={hayRegalos} venue={c.venue} />
       </div>
@@ -346,7 +346,7 @@ function Olivo({ c, t, f, inv, invitacion, hayRegalos }) {
           <circle cx="186" cy="44" r="4" />
           <circle cx="194" cy="54" r="3.5" />
         </svg>
-        <span className="text-sm uppercase tracking-[0.3em] t-muted">{invitacion ? invitacion.name : t.aniversario ? t.eyebrow : 'Junto a nuestras familias'}</span>
+        <span className="text-sm uppercase tracking-[0.3em] t-muted">{invitacion ? invitacion.name : inv.textos?.saludo || (t.aniversario ? t.eyebrow : 'Junto a nuestras familias')}</span>
         <h1 className="t-script t-accent text-6xl leading-[1.05] sm:text-7xl">
           {c.bride_name}
           <br />y {c.groom_name}
@@ -368,7 +368,7 @@ function Olivo({ c, t, f, inv, invitacion, hayRegalos }) {
             {inv.hora ? <span className="t-muted"> · {inv.horaTexto}</span> : null}
           </p>
         )}
-        <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} />
+        <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} oculto={inv.mostrar?.cuenta === false} />
         <Pases invitacion={invitacion} />
         <Acciones invitacion={invitacion} hayRegalos={hayRegalos} venue={c.venue} />
       </div>
@@ -401,7 +401,7 @@ function Andino({ c, t, f, inv, invitacion, hayRegalos }) {
       <FranjaAndina />
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-5 px-6 py-12">
         <span className="text-[11px] uppercase tracking-[0.35em]" style={{ color: 'var(--t-accent)' }}>
-          {invitacion ? `Querida(o) ${invitacion.name}` : t.aniversario ? t.eyebrow : 'Kuyanakuy · nos queremos'}
+          {invitacion ? `Querida(o) ${invitacion.name}` : inv.textos?.saludo || (t.aniversario ? t.eyebrow : 'Kuyanakuy · nos queremos')}
         </span>
         <h1 className="t-display text-5xl font-semibold leading-[1.02] sm:text-6xl">
           {c.bride_name}
@@ -431,7 +431,7 @@ function Andino({ c, t, f, inv, invitacion, hayRegalos }) {
             <p className="t-display mt-1 text-xl">{c.venue}</p>
           </div>
         )}
-        <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} />
+        <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} oculto={inv.mostrar?.cuenta === false} />
         <Pases invitacion={invitacion} />
         <Acciones invitacion={invitacion} hayRegalos={hayRegalos} venue={c.venue} />
       </div>
@@ -471,7 +471,7 @@ function SobreSello({ c, t, f, inv, invitacion, hayRegalos, iniciales }) {
             </>
           )}
         </p>
-        <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} />
+        <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} oculto={inv.mostrar?.cuenta === false} />
         <Pases invitacion={invitacion} />
         <Acciones invitacion={invitacion} hayRegalos={hayRegalos} venue={c.venue} />
       </div>

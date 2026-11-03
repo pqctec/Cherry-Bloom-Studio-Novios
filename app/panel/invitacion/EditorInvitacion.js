@@ -7,7 +7,7 @@ import Icon from '@/components/Icon'
 import CampoHora from '@/components/CampoHora'
 import Portada from '@/components/invitacion/Portadas'
 import { Itinerario, DressCode } from '@/components/invitacion/Secciones'
-import { PRECIO_PRO, MODELOS, modelo as buscarModelo, paleta as buscarPaleta, variablesTema, invitacionConDefectos, horaBonita, leerHora, textosEvento, partesFecha, iniciales } from '@/lib/temas'
+import { SECCIONES, TEXTOS, aplicaA, PRECIO_PRO, MODELOS, modelo as buscarModelo, paleta as buscarPaleta, variablesTema, invitacionConDefectos, horaBonita, leerHora, textosEvento, partesFecha, iniciales } from '@/lib/temas'
 import { CANCIONES } from '@/lib/musica'
 import { escenario, linkWhatsApp } from '@/lib/escenarios'
 import { comprimir } from '@/lib/imagenes'
@@ -177,6 +177,8 @@ export default function EditorInvitacion({ couple, pro = null }) {
       fotos: inv.fotos,
       video: inv.video,
       contacto: inv.contacto.trim().slice(0, 80),
+      mostrar: inv.mostrar,
+      textos: Object.fromEntries(Object.entries(inv.textos).map(([k, v]) => [k, (v || '').trim().slice(0, 120)])),
     }
     const { error: err } = await supabase.from('couples').update({ invite: limpio }).eq('id', couple.id)
     setGuardando(false)
@@ -185,7 +187,8 @@ export default function EditorInvitacion({ couple, pro = null }) {
     router.refresh()
   }
 
-  const t = textosEvento(couple)
+  const t0 = textosEvento(couple)
+  const t = inv.textos?.saludo ? { ...t0, eyebrow: inv.textos.saludo } : t0
   const fotoPropia = couple.cover_theme === 'propia' && couple.cover_url ? couple.cover_url : null
   const demoInvitacion = { name: 'Familia Rodríguez', passes: 4, status: 'pendiente' }
   const coupleVista = { ...couple, bride_name: couple.bride_name || 'Novia', groom_name: couple.groom_name || 'Novio' }
@@ -569,6 +572,45 @@ export default function EditorInvitacion({ couple, pro = null }) {
           </div>
         </section>
 
+        {/* Qué mostrar y textos */}
+        <section className="tarjeta space-y-5 p-6">
+          <div>
+            <h2 className="font-serif text-2xl font-semibold">7. Qué mostrar y textos</h2>
+            <p className="text-xs text-cacao-500">Apaguen lo que no quieran en su invitación y cambien los textos fijos. Vacío = texto del modelo.</p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {SECCIONES.filter((x) => aplicaA(x, m.id)).map((x) => (
+              <label key={x.id} className="flex items-center justify-between gap-3 rounded-xl border border-arena-200 bg-white/70 px-4 py-3">
+                <span className="text-sm text-cacao">{x.nombre}</span>
+                <input
+                  type="checkbox"
+                  checked={inv.mostrar[x.id] !== false}
+                  onChange={(e) => set('mostrar', { ...inv.mostrar, [x.id]: e.target.checked })}
+                  className="h-5 w-5 accent-[#A8553A]"
+                />
+              </label>
+            ))}
+          </div>
+          <div className="space-y-3">
+            {TEXTOS.filter((x) => aplicaA(x, m.id)).map((x) => (
+              <div key={x.id}>
+                <label className="etiqueta" htmlFor={`txt-${x.id}`}>
+                  {x.nombre}
+                </label>
+                <input
+                  id={`txt-${x.id}`}
+                  value={inv.textos[x.id] || ''}
+                  maxLength={120}
+                  onChange={(e) => set('textos', { ...inv.textos, [x.id]: e.target.value })}
+                  className="campo"
+                  placeholder={x.ejemplo}
+                />
+              </div>
+            ))}
+          </div>
+          <p className="text-[11px] text-cacao-500">El hospedaje solo aparece si escriben algo en “Hospedaje cercano” (sección 6).</p>
+        </section>
+
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" onClick={guardar} disabled={guardando} className="btn-primario">
             {guardando ? 'Guardando…' : 'Guardar mi invitación'}
@@ -610,8 +652,8 @@ export default function EditorInvitacion({ couple, pro = null }) {
               portadaUrl={fotoPropia || escenario(couple.cover_theme).url}
               iniciales={iniciales(couple)}
             />
-            {m.id !== 'historia' && <Itinerario items={inv.itinerario.filter((x) => x.titulo)} />}
-            <DressCode dresscode={inv.dresscode} />
+            {inv.mostrar.itinerario && m.id !== 'historia' && <Itinerario items={inv.itinerario.filter((x) => x.titulo)} />}
+            {inv.mostrar.dresscode && <DressCode dresscode={inv.dresscode} />}
           </div>
         </div>
         <p className="mt-2 text-center text-[11px] text-cacao-500">Ejemplo con “Familia Rodríguez · 4 pases”.</p>

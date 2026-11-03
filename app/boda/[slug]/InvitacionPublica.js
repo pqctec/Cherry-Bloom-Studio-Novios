@@ -17,7 +17,9 @@ export default function InvitacionPublica({ couple, invitacion, regalos, codigo,
     inv.paleta = 'terracota'
   }
   const m = modelo(inv.modelo)
-  const t = textosEvento(couple)
+  const t0 = textosEvento(couple)
+  const t = inv.textos.saludo ? { ...t0, eyebrow: inv.textos.saludo } : t0
+  const ver = inv.mostrar
   const f = partesFecha(couple.wedding_date)
   const fuentes = fuentesHref(m)
   const musica = cancion(inv.musica)
@@ -44,11 +46,11 @@ export default function InvitacionPublica({ couple, invitacion, regalos, codigo,
         limite={limiteISO}
       />
 
-      {m.id !== 'clasica' && m.id !== 'historia' && <Foto url={fotoPropia} nombres={nombres} />}
-      <Mensaje texto={couple.cover_message} firma={nombres} />
-      {m.id !== 'historia' && <Itinerario items={inv.itinerario} />}
-      <DressCode dresscode={inv.dresscode} />
-      <Ubicacion venue={couple.venue} hospedaje={inv.hospedaje} />
+      {ver.foto && m.id !== 'clasica' && m.id !== 'historia' && <Foto url={fotoPropia} nombres={nombres} />}
+      {ver.mensaje && <Mensaje texto={couple.cover_message} firma={nombres} />}
+      {ver.itinerario && m.id !== 'historia' && <Itinerario items={inv.itinerario} />}
+      {ver.dresscode && <DressCode dresscode={inv.dresscode} />}
+      {ver.ubicacion && <Ubicacion venue={couple.venue} hospedaje={ver.hospedaje ? inv.hospedaje : ''} />}
 
       <Invitado
         slug={slug}
@@ -58,12 +60,14 @@ export default function InvitacionPublica({ couple, invitacion, regalos, codigo,
         codigoInvalido={!!codigoInvalido}
         regalos={lista}
         textos={t}
-        itinerario={inv.itinerario}
+        itinerario={ver.itinerario ? inv.itinerario : []}
       />
 
-      <section className="pb-6 pt-16 text-center">
-        <p className="t-script t-accent text-5xl">¡Te esperamos!</p>
-      </section>
+      {ver.cierre && (
+        <section className="pb-6 pt-16 text-center">
+          <p className="t-script t-accent text-5xl">{inv.textos.cierre || '¡Te esperamos!'}</p>
+        </section>
+      )}
       <Credito />
     </main>
   )

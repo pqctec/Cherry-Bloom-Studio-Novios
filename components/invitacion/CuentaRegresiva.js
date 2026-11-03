@@ -16,7 +16,7 @@ function calcular(fecha, hora) {
 
 // Cuenta regresiva. variante "foto": cristal sobre una imagen; "tema": con los
 // colores del modelo de invitación.
-export default function CuentaRegresiva({ fecha, hora, variante = 'tema' }) {
+export default function CuentaRegresiva({ fecha, hora, variante = 'tema', oculto = false }) {
   const [t, setT] = useState(null)
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export default function CuentaRegresiva({ fecha, hora, variante = 'tema' }) {
     return () => clearInterval(id)
   }, [fecha, hora])
 
-  if (!fecha || !t) return null
+  if (oculto || !fecha || !t) return null
 
   const foto = variante === 'foto'
   return (

@@ -51,7 +51,8 @@ export default function Historia({ c, t, f, inv, invitacion, hayRegalos, limite 
       {/* 1 · Portada (video corto o foto) */}
       <section className="flex min-h-[100svh] flex-col items-center pb-12 text-center" style={{ background: fondo }}>
         <p className="t-display px-6 pb-4 pt-10 text-[11px] uppercase tracking-[0.3em]" style={tinta}>
-          {invitacion ? `Para ${invitacion.name}` : t.aniversario ? t.eyebrow || 'Celebramos nuestro aniversario' : 'Junto a sus familias'}
+          {inv.textos?.saludo || (t.aniversario ? t.eyebrow || 'Celebramos nuestro aniversario' : 'Junto a sus familias')}
+          {invitacion && <span className="mt-1 block text-[10px] tracking-[0.25em] opacity-70">Para {invitacion.name}</span>}
         </p>
         <div className="relative w-full max-w-lg">
           {inv.video ? (
@@ -76,20 +77,31 @@ export default function Historia({ c, t, f, inv, invitacion, hayRegalos, limite 
         </div>
         <div className="mt-6 w-full px-6">
           <div className="mx-auto max-w-sm">
-            <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} />
+            <CuentaRegresiva fecha={c.wedding_date} hora={inv.hora} oculto={inv.mostrar?.cuenta === false} />
           </div>
         </div>
       </section>
 
       {/* 2 · Los detalles */}
+      {inv.mostrar?.detalles !== false && (
       <section className="flex min-h-[100svh] flex-col items-center pb-14 text-center" style={{ background: fondo }}>
         <div className="relative w-full max-w-lg">
           <img src={fotoDetalles} alt="" className="block h-[62svh] max-h-[700px] w-full object-cover" />
           <div className="absolute inset-x-0 bottom-10 text-white" style={sombra}>
-            <p className="t-script -mb-3 text-5xl" style={{ color: 'var(--t-accent)' }}>
-              Los
-            </p>
-            <p className="t-display text-5xl tracking-[0.08em] sm:text-6xl">DETALLES</p>
+            {(() => {
+              const tx = (inv.textos?.detalles || 'Los detalles').trim()
+              const [primera, ...resto] = tx.split(' ')
+              return resto.length ? (
+                <>
+                  <p className="t-script -mb-3 text-5xl" style={{ color: 'var(--t-accent)' }}>
+                    {primera}
+                  </p>
+                  <p className="t-display text-5xl tracking-[0.08em] sm:text-6xl">{resto.join(' ').toUpperCase()}</p>
+                </>
+              ) : (
+                <p className="t-display text-5xl tracking-[0.08em] sm:text-6xl">{tx.toUpperCase()}</p>
+              )
+            })()}
           </div>
           <Rasgado color="var(--t-alt)" />
         </div>
@@ -97,16 +109,13 @@ export default function Historia({ c, t, f, inv, invitacion, hayRegalos, limite 
           {c.venue && <p className="t-display text-xl tracking-[0.1em]">{c.venue.toUpperCase()}</p>}
           {f && <p className="text-sm opacity-80">{f.larga}{hora ? ` · ${hora}` : ''}</p>}
           {linea}
-          {inv.hospedaje ? (
-            <p className="mt-2 whitespace-pre-line text-sm italic opacity-80">{inv.hospedaje}</p>
-          ) : (
-            <p className="mt-2 text-sm italic opacity-80">Escríbannos si necesitan hospedaje cerca.</p>
-          )}
+          {inv.hospedaje && inv.mostrar?.hospedaje !== false && <p className="mt-2 whitespace-pre-line text-sm italic opacity-80">{inv.hospedaje}</p>}
         </div>
       </section>
+      )}
 
       {/* 3 · Itinerario */}
-      {inv.itinerario?.some((x) => x.titulo) && (
+      {inv.mostrar?.itinerario !== false && inv.itinerario?.some((x) => x.titulo) && (
         <section className="px-6 py-20 text-center" style={{ background: 'color-mix(in srgb, var(--t-soft) 72%, #000000)', color: '#FFFFFF' }}>
           <p className="t-script -mb-2 text-5xl" style={{ color: 'var(--t-accent)' }}>
             El
@@ -128,26 +137,17 @@ export default function Historia({ c, t, f, inv, invitacion, hayRegalos, limite 
         </section>
       )}
 
-      {/* 4 · RSVP */}
+      {/* 4 · Confirmación */}
       <section className="relative flex min-h-[100svh] flex-col items-center justify-center overflow-hidden px-6 py-16 text-center" style={{ background: fondo }}>
-        <div aria-hidden="true" className="t-display pointer-events-none absolute inset-y-6 left-1/2 flex -translate-x-1/2 flex-col items-center justify-between leading-none" style={{ color: 'var(--t-soft)', opacity: 0.18 }}>
-          {['R', 'S', 'V', 'P'].map((l) => (
-            <span key={l} className="text-[150px] sm:text-[180px]">
-              {l}
-            </span>
-          ))}
-        </div>
         <div className="relative flex max-w-sm flex-col items-center gap-3" style={tinta}>
-          <p className="t-script text-5xl">Confirma</p>
+          <p className="t-script text-5xl">{inv.textos?.confirma || 'Confirma'}</p>
           {limite && (
             <p className="t-script text-3xl" style={{ color: 'var(--t-accent)' }}>
               antes del {fechaLarga(limite)}
             </p>
           )}
-          <p className="t-display mt-2 text-xs uppercase tracking-[0.2em]">
-            Por favor avísanos si podrás
-            <br />
-            acompañarnos en {t.aniversario ? 'nuestro aniversario' : 'nuestra boda'}
+          <p className="t-display mt-2 max-w-xs text-xs uppercase tracking-[0.2em]">
+            {inv.textos?.confirmaTexto || `Por favor avísanos si podrás acompañarnos en ${t.aniversario ? 'nuestro aniversario' : 'nuestra boda'}`}
           </p>
           {invitacion?.passes ? (
             <p className="text-sm opacity-80">
