@@ -12,7 +12,7 @@ export default async function InvitadosPage({ searchParams }) {
 
   const { data: couple } = await supabase
     .from('couples')
-    .select('id, slug, bride_name, groom_name, wedding_date, venue, rsvp_deadline_days, event_type, original_wedding_date, gifts_enabled')
+    .select('id, slug, bride_name, groom_name, wedding_date, venue, rsvp_deadline_days, event_type, original_wedding_date, gifts_enabled, invite')
     .eq('user_id', user.id)
     .maybeSingle()
 

@@ -6,6 +6,7 @@ import Icon from '@/components/Icon'
 import Ornamento from '@/components/Ornamento'
 import GiftCard from './GiftCard'
 import { fechaLarga } from '@/lib/invitaciones'
+import { horaBonita } from '@/lib/temas'
 
 // Avisa a los novios (en segundo plano) que hubo una novedad. Si WhatsApp no
 // está configurado en el servidor, no hace nada.
@@ -15,7 +16,7 @@ function avisarNovios(slug) {
 
 // Flujo del invitado con su link personal: 1) confirma asistencia (hasta sus
 // pases) y 2) elige su regalo. Sin link personal solo puede ver la lista.
-export default function Invitado({ slug, fechaLimite, codigo, invitacionInicial, codigoInvalido, regalos, textos }) {
+export default function Invitado({ slug, fechaLimite, codigo, invitacionInicial, codigoInvalido, regalos, textos, itinerario = [] }) {
   const supabase = createClient()
   const [inv, setInv] = useState(invitacionInicial)
   const [editando, setEditando] = useState(!invitacionInicial || invitacionInicial.status === 'pendiente')
@@ -100,6 +101,24 @@ export default function Invitado({ slug, fechaLimite, codigo, invitacionInicial,
                   : 'Te vamos a extrañar ese día.'}
               </p>
               {inv.guest_names && <p className="mt-1 text-sm text-cacao-500">{inv.guest_names}</p>}
+              {inv.status === 'confirmado' && itinerario.some((x) => x.titulo) && (
+                <div className="mx-auto mt-5 max-w-sm rounded-2xl border border-arena-200 px-4 py-3 text-left">
+                  <p className="text-center text-[11px] font-medium uppercase tracking-[0.25em] text-cacao-500">Itinerario del día</p>
+                  <ul className="mt-2 space-y-1.5 text-sm text-cacao">
+                    {itinerario
+                      .filter((x) => x.titulo)
+                      .map((x, i) => (
+                        <li key={i} className="flex gap-3">
+                          <span className="w-20 shrink-0 font-medium text-terracota">{horaBonita(x.hora) || '·'}</span>
+                          <span>
+                            {x.titulo}
+                            {x.lugar ? <span className="text-cacao-500"> · {x.lugar}</span> : null}
+                          </span>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              )}
               {(inv.regalos || []).length > 0 && (
                 <p className="mx-auto mt-4 max-w-sm rounded-xl bg-salvia-100 px-4 py-2 text-sm text-salvia">
                   Tu regalo: {inv.regalos.join(', ')}

@@ -58,6 +58,7 @@ export default function InvitacionPublica({ couple, invitacion, regalos, codigo,
         codigoInvalido={!!codigoInvalido}
         regalos={lista}
         textos={t}
+        itinerario={inv.itinerario}
       />
 
       <section className="pb-6 pt-16 text-center">
