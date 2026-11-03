@@ -42,7 +42,8 @@ export default function Invitaciones({ couple, invitaciones, filtroInicial = 'to
   const [copiado, setCopiado] = useState(null)
   const [editando, setEditando] = useState(null)
   const [enviadas, setEnviadas] = useState(() => new Set(invitaciones.filter((i) => i.sent_at).map((i) => i.id)))
-  const [cola, setCola] = useState(null) // { ids: [...], pos: 0 } mientras envían una tras otra
+  const [cola, setCola] = useState(null) // { ids: [...], pos: 0, texto? } mientras envían una tras otra
+  const [libre, setLibre] = useState({ abierto: false, destino: 'recibieron', texto: '' })
 
   const totalPases = invitaciones.reduce((s, i) => s + i.passes, 0)
   const confirmadas = invitaciones.filter((i) => i.status === 'confirmado')
@@ -121,9 +122,34 @@ export default function Invitaciones({ couple, invitaciones, filtroInicial = 'to
   }
   function enviarActual() {
     if (!actual) return
-    enviar(actual)
+    if (cola.texto) {
+      window.open(linkWhatsAppA(actual.phone, personalizar(cola.texto, actual)), '_blank')
+    } else {
+      enviar(actual)
+    }
     siguiente()
   }
+
+  // Mensajes personalizados: {nombre}, {pases} y {link} se reemplazan por los de cada invitado.
+  function personalizar(texto, inv) {
+    return texto
+      .replaceAll('{nombre}', inv.name)
+      .replaceAll('{pases}', String(inv.passes))
+      .replaceAll('{link}', linkInvitacion(couple.slug, inv.code))
+  }
+  const recibieron = (i) => enviadas.has(i.id) || i.status !== 'pendiente'
+  const DESTINOS = [
+    ['recibieron', 'Todos los que recibieron la invitación', invitaciones.filter(recibieron)],
+    ['confirmado', 'Los que confirmaron', invitaciones.filter((i) => i.status === 'confirmado')],
+    ['pendiente', 'Los que recibieron y no responden', invitaciones.filter((i) => recibieron(i) && i.status === 'pendiente')],
+    ['no_asiste', 'Los que no asistirán', invitaciones.filter((i) => i.status === 'no_asiste')],
+  ]
+  const destino = DESTINOS.find((d) => d[0] === libre.destino) || DESTINOS[0]
+  const PLANTILLAS = [
+    ['Recordatorio del día', '¡Hola {nombre}! 💛 Les recordamos que ya falta poco para nuestra celebración. Aquí está su invitación con la hora, el lugar y el itinerario: {link}'],
+    ['Cambio de horario', 'Hola {nombre}, les avisamos un cambio en el horario de nuestra celebración. Revisen los detalles actualizados aquí: {link}'],
+    ['Gracias por confirmar', '¡Gracias {nombre} por confirmar! Los esperamos. Reservamos {pases} lugar(es) para ustedes. 🥂'],
+  ]
 
   return (
     <div className="space-y-8">
@@ -139,7 +165,7 @@ export default function Invitaciones({ couple, invitaciones, filtroInicial = 'to
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-rosa-600">
-                Enviando invitaciones · {cola.pos + 1} de {cola.ids.length}
+                {cola.texto ? 'Enviando mensaje personalizado' : 'Enviando invitaciones'} · {cola.pos + 1} de {cola.ids.length}
               </p>
               <p className="mt-1 font-serif text-2xl font-semibold text-cacao">{actual.name}</p>
               <p className="text-xs text-cacao-500">
@@ -166,16 +192,93 @@ export default function Invitaciones({ couple, invitaciones, filtroInicial = 'to
           </p>
         </div>
       ) : (
-        porEnviar.length > 0 && (
+        <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-arena-200 bg-white/80 px-5 py-4">
             <p className="text-sm text-cacao">
-              <b>{porEnviar.length}</b> {porEnviar.length === 1 ? 'invitación aún no se ha enviado' : 'invitaciones aún no se han enviado'}.
+              {porEnviar.length > 0 ? (
+                <>
+                  <b>{porEnviar.length}</b> {porEnviar.length === 1 ? 'invitación aún no se ha enviado' : 'invitaciones aún no se han enviado'}.
+                </>
+              ) : (
+                'Todas las invitaciones ya fueron enviadas.'
+              )}
             </p>
-            <button onClick={() => setCola({ ids: porEnviar.map((i) => i.id), pos: 0 })} className="btn-primario btn-sm">
-              <Icon name="chat" className="h-4 w-4" /> Enviar todas las pendientes ({porEnviar.length})
-            </button>
+            <div className="flex flex-wrap gap-2">
+              {porEnviar.length > 0 && (
+                <button onClick={() => setCola({ ids: porEnviar.map((i) => i.id), pos: 0 })} className="btn-primario btn-sm">
+                  <Icon name="chat" className="h-4 w-4" /> Enviar todas las pendientes ({porEnviar.length})
+                </button>
+              )}
+              <button onClick={() => setLibre((v) => ({ ...v, abierto: !v.abierto }))} className="btn-claro btn-sm">
+                <Icon name="edit" className="h-4 w-4" /> Mensaje personalizado
+              </button>
+            </div>
           </div>
-        )
+
+          {libre.abierto && (
+            <div className="tarjeta space-y-4 p-5">
+              <div>
+                <h2 className="font-serif text-2xl font-semibold">Mensaje personalizado</h2>
+                <p className="text-xs text-cacao-500">
+                  Escriban lo que quieran. <code className="rounded bg-crema px-1">{'{nombre}'}</code>,{' '}
+                  <code className="rounded bg-crema px-1">{'{pases}'}</code> y <code className="rounded bg-crema px-1">{'{link}'}</code> se cambian
+                  solos por los datos de cada invitado.
+                </p>
+              </div>
+              <div>
+                <p className="etiqueta">¿A quiénes?</p>
+                <div className="flex flex-wrap gap-2">
+                  {DESTINOS.map(([v, l, lista]) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setLibre((x) => ({ ...x, destino: v }))}
+                      aria-pressed={libre.destino === v}
+                      className={`rounded-full px-3.5 py-1.5 text-xs font-medium ${libre.destino === v ? 'bg-terracota text-crema' : 'border border-arena-300 bg-white text-cacao-700'}`}
+                    >
+                      {l} ({lista.length})
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                  <span className="etiqueta mb-0">Mensaje</span>
+                  {PLANTILLAS.map(([n, t]) => (
+                    <button key={n} type="button" onClick={() => setLibre((x) => ({ ...x, texto: t }))} className="rounded-full bg-crema px-2.5 py-0.5 text-[11px] text-cacao-700 hover:bg-arena">
+                      {n}
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  rows={5}
+                  value={libre.texto}
+                  onChange={(e) => setLibre((x) => ({ ...x, texto: e.target.value }))}
+                  className="campo"
+                  placeholder="¡Hola {nombre}! Les contamos que…"
+                />
+                {libre.texto && destino[2][0] && (
+                  <p className="mt-2 whitespace-pre-line rounded-xl bg-crema px-4 py-3 text-xs text-cacao-700">
+                    <b>Así le llega a {destino[2][0].name}:</b>
+                    {'\n'}
+                    {personalizar(libre.texto, destino[2][0])}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                disabled={!libre.texto.trim() || destino[2].length === 0}
+                onClick={() => {
+                  setCola({ ids: destino[2].map((i) => i.id), pos: 0, texto: libre.texto })
+                  setLibre((x) => ({ ...x, abierto: false }))
+                }}
+                className="btn-primario btn-sm"
+              >
+                <Icon name="chat" className="h-4 w-4" /> Enviar a {destino[2].length} {destino[2].length === 1 ? 'invitado' : 'invitados'}
+              </button>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Totales */}
