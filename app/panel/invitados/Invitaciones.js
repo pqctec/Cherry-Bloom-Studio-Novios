@@ -41,6 +41,8 @@ export default function Invitaciones({ couple, invitaciones, filtroInicial = 'to
   const [filtro, setFiltro] = useState(filtroInicial)
   const [copiado, setCopiado] = useState(null)
   const [editando, setEditando] = useState(null)
+  const [enviadas, setEnviadas] = useState(() => new Set(invitaciones.filter((i) => i.sent_at).map((i) => i.id)))
+  const [cola, setCola] = useState(null) // { ids: [...], pos: 0 } mientras envían una tras otra
 
   const totalPases = invitaciones.reduce((s, i) => s + i.passes, 0)
   const confirmadas = invitaciones.filter((i) => i.status === 'confirmado')
@@ -106,6 +108,21 @@ export default function Invitaciones({ couple, invitaciones, filtroInicial = 'to
   function enviar(inv) {
     const link = linkInvitacion(couple.slug, inv.code)
     window.open(linkWhatsAppA(inv.phone, mensajeInvitacion({ invitacion: inv, couple, link })), '_blank')
+    setEnviadas((s) => new Set(s).add(inv.id))
+    supabase.from('invitations').update({ sent_at: new Date().toISOString() }).eq('id', inv.id).then(() => {})
+  }
+
+  // Envío en cadena: los navegadores no permiten abrir 38 chats de golpe, así que
+  // cada clic abre el WhatsApp del siguiente invitado pendiente.
+  const porEnviar = invitaciones.filter((i) => i.status === 'pendiente' && !enviadas.has(i.id))
+  const actual = cola ? invitaciones.find((i) => i.id === cola.ids[cola.pos]) : null
+  function siguiente() {
+    setCola((c) => (c && c.pos + 1 < c.ids.length ? { ...c, pos: c.pos + 1 } : null))
+  }
+  function enviarActual() {
+    if (!actual) return
+    enviar(actual)
+    siguiente()
   }
 
   return (
@@ -116,6 +133,51 @@ export default function Invitaciones({ couple, invitaciones, filtroInicial = 'to
           <b>{fechaLarga(limite)}</b>. Pueden cambiarla en “Nuestra página”.
         </p>
       )}
+      {/* Envío en cadena */}
+      {cola && actual ? (
+        <div className="sticky top-20 z-30 rounded-2xl border border-terracota/40 bg-white p-5 shadow-suave">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-rosa-600">
+                Enviando invitaciones · {cola.pos + 1} de {cola.ids.length}
+              </p>
+              <p className="mt-1 font-serif text-2xl font-semibold text-cacao">{actual.name}</p>
+              <p className="text-xs text-cacao-500">
+                {actual.phone || 'Sin WhatsApp: elegirán el contacto en WhatsApp'} · {actual.passes} {actual.passes === 1 ? 'pase' : 'pases'}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={enviarActual} className="btn-primario">
+                <Icon name="chat" className="h-4 w-4" /> Abrir WhatsApp y pasar al siguiente
+              </button>
+              <button onClick={siguiente} className="btn-claro btn-sm">
+                Saltar
+              </button>
+              <button onClick={() => setCola(null)} className="btn-claro btn-sm">
+                Terminar
+              </button>
+            </div>
+          </div>
+          <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-arena">
+            <div className="h-full rounded-full bg-terracota transition-all" style={{ width: `${(cola.pos / cola.ids.length) * 100}%` }} />
+          </div>
+          <p className="mt-3 text-[11px] text-cacao-500">
+            En cada WhatsApp que se abre pulsen <b>Enviar</b>, vuelvan a esta pestaña y sigan con el próximo.
+          </p>
+        </div>
+      ) : (
+        porEnviar.length > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-arena-200 bg-white/80 px-5 py-4">
+            <p className="text-sm text-cacao">
+              <b>{porEnviar.length}</b> {porEnviar.length === 1 ? 'invitación aún no se ha enviado' : 'invitaciones aún no se han enviado'}.
+            </p>
+            <button onClick={() => setCola({ ids: porEnviar.map((i) => i.id), pos: 0 })} className="btn-primario btn-sm">
+              <Icon name="chat" className="h-4 w-4" /> Enviar todas las pendientes ({porEnviar.length})
+            </button>
+          </div>
+        )
+      )}
+
       {/* Totales */}
       <div className="grid gap-4 sm:grid-cols-4">
         {[
@@ -241,7 +303,7 @@ export default function Invitaciones({ couple, invitaciones, filtroInicial = 'to
                 const estado = ESTADO[inv.status]
                 const enEdicion = editando?.id === inv.id
                 return (
-                  <tr key={inv.id} className="border-b border-arena-200/70 align-top last:border-0">
+                  <tr key={inv.id} className={`border-b border-arena-200/70 align-top last:border-0 ${actual?.id === inv.id ? 'bg-rubor-100/60' : ''}`}>
                     <td className="px-5 py-3">
                       {enEdicion ? (
                         <div className="space-y-2">
@@ -279,6 +341,11 @@ export default function Invitaciones({ couple, invitaciones, filtroInicial = 'to
                         {estado.label}
                         {inv.status === 'confirmado' ? ` · ${inv.attending} de ${inv.passes}` : ''}
                       </span>
+                      {inv.status === 'pendiente' && enviadas.has(inv.id) && (
+                        <p className="mt-1.5 text-[11px] text-salvia">
+                          ✓ Enviada{inv.sent_at ? ` el ${new Date(inv.sent_at).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' })}` : ''}
+                        </p>
+                      )}
                       {inv.guest_names && <p className="mt-1.5 text-xs text-cacao-700">{inv.guest_names}</p>}
                       {inv.status === 'pendiente' && inv.reminded_at && (
                         <p className="mt-1.5 text-[11px] text-cacao-500">

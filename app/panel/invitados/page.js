@@ -3,6 +3,15 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Invitaciones from './Invitaciones'
 import TerminarPaso from '@/components/TerminarPaso'
 
+const COLUMNAS = 'id, code, name, passes, phone, status, attending, guest_names, message, responded_at, created_at, reminded_at'
+
+// Con la migración 15 se lee también sent_at; sin ella, la lista sigue funcionando.
+async function cargarInvitaciones(supabase, coupleId) {
+  const r = await supabase.from('invitations').select(`${COLUMNAS}, sent_at`).eq('couple_id', coupleId).order('created_at', { ascending: true })
+  if (!r.error) return r
+  return supabase.from('invitations').select(COLUMNAS).eq('couple_id', coupleId).order('created_at', { ascending: true })
+}
+
 export default async function InvitadosPage({ searchParams }) {
   const { filtro } = (await searchParams) || {}
   const supabase = await createServerSupabaseClient()
@@ -17,11 +26,7 @@ export default async function InvitadosPage({ searchParams }) {
     .maybeSingle()
 
   const [{ data: invitaciones }, { count: regalos }] = await Promise.all([
-    supabase
-      .from('invitations')
-      .select('id, code, name, passes, phone, status, attending, guest_names, message, responded_at, created_at, reminded_at')
-      .eq('couple_id', couple.id)
-      .order('created_at', { ascending: true }),
+    cargarInvitaciones(supabase, couple.id),
     supabase.from('gift_items').select('id', { count: 'exact', head: true }).eq('couple_id', couple.id),
   ])
 
