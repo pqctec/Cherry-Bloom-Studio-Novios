@@ -220,6 +220,20 @@ export default async function PanelResumenPage({ searchParams }) {
         </ol>
       </section>
 
+      {/* Acceso al croquis: opcional, no forma parte de los pasos para enviar invitaciones */}
+      <section className="tarjeta flex flex-wrap items-center justify-between gap-4 p-6">
+        <div className="min-w-0 flex-1">
+          <h2 className="font-serif text-2xl font-semibold">Croquis y mesas</h2>
+          <p className="mt-1 max-w-xl text-sm text-cacao-700">
+            Dibujen su salón, ubiquen las mesas y siente a cada invitación según sus pases
+            {inv.length ? `: ${asistentes || pases} ${asistentes ? 'personas confirmadas' : 'pases entregados'} por ubicar.` : '.'}
+          </p>
+        </div>
+        <Link href="/panel/croquis" className="btn-primario btn-sm">
+          Armar mi croquis
+        </Link>
+      </section>
+
       <div className={`grid gap-5 sm:grid-cols-2 ${conRegalos ? 'lg:grid-cols-4' : ''}`}>
         {cards.map((card) => (
           <div key={card.label} className="tarjeta p-6">

@@ -8,6 +8,7 @@ const NAV = [
   { href: '/panel', label: 'Resumen', icon: 'heart' },
   { href: '/panel/invitacion', label: 'Mi invitación', icon: 'mail' },
   { href: '/panel/invitados', label: 'Invitados', icon: 'users' },
+  { href: '/panel/croquis', label: 'Croquis y mesas', icon: 'users' },
   { href: '/panel/regalos', label: 'Lista de regalos', icon: 'gift' },
   { href: '/panel/decoracion', label: 'Decoración', icon: 'flower' },
   { href: '/panel/configuracion', label: 'Nuestra página', icon: 'rings' },
