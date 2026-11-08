@@ -7,9 +7,33 @@ import { cancion } from '@/lib/musica'
 import { escenario } from '@/lib/escenarios'
 import Invitado from './Invitado'
 
+// Fecha de hoy en Lima (AAAA-MM-DD), para no depender de la zona horaria del servidor.
+function hoyLima() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
+}
+
+// Cartel que reemplaza a toda la invitación cuando ya pasó la fecha límite.
+function PlazoTerminado({ couple }) {
+  const quienes = couple.event_type === 'aniversario' ? 'los anfitriones' : 'los novios'
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-crema px-4 py-16">
+      <div className="tarjeta w-full max-w-md p-8 text-center">
+        <p className="eyebrow">
+          {couple.bride_name} &amp; {couple.groom_name}
+        </p>
+        <p className="mt-4 font-serif text-2xl font-semibold text-cacao">El plazo para confirmar terminó.</p>
+        <p className="mt-3 text-sm leading-relaxed text-cacao-700">
+          Si deseas absolver alguna consulta, comunícate directamente con {quienes}.
+        </p>
+      </div>
+    </main>
+  )
+}
+
 // La invitación completa, ya con el modelo y la personalización de la pareja.
 // La usa la página pública (/boda/[slug]) y la vista previa del panel.
 export default function InvitacionPublica({ couple, invitacion, regalos, codigo, codigoInvalido, limiteISO, slug, vistaPrevia = false, proActivo = false }) {
+  if (!vistaPrevia && limiteISO && hoyLima() > limiteISO) return <PlazoTerminado couple={couple} />
   const inv = invitacionConDefectos(couple.invite || {}, couple)
   // Un modelo PRO solo se muestra a los invitados cuando está pagado/activado.
   if (!proActivo) {
