@@ -28,6 +28,13 @@ function leerLista(texto) {
     .filter((i) => i.name)
 }
 
+// Abre WhatsApp en una pestaña nueva. Si el navegador bloquea la ventana
+// (bloqueador de ventanas emergentes), lo abre en esta misma pestaña.
+function abrirWhatsApp(url) {
+  const w = window.open(url, '_blank')
+  if (!w || w.closed) window.location.href = url
+}
+
 export default function Invitaciones({ couple, invitaciones, filtroInicial = 'todas' }) {
   const router = useRouter()
   const supabase = createClient()
@@ -101,16 +108,23 @@ export default function Invitaciones({ couple, invitaciones, filtroInicial = 'to
 
   async function recordar(inv) {
     const link = linkInvitacion(couple.slug, inv.code)
-    window.open(linkWhatsAppA(inv.phone, mensajeRecordatorio({ invitacion: inv, couple, link, limite })), '_blank')
+    const url = linkWhatsAppA(inv.phone, mensajeRecordatorio({ invitacion: inv, couple, link, limite }))
+    const w = window.open(url, '_blank')
     await supabase.from('invitations').update({ reminded_at: new Date().toISOString() }).eq('id', inv.id)
+    if (!w || w.closed) return (window.location.href = url)
     router.refresh()
   }
 
   function enviar(inv) {
     const link = linkInvitacion(couple.slug, inv.code)
-    window.open(linkWhatsAppA(inv.phone, mensajeInvitacion({ invitacion: inv, couple, link })), '_blank')
+    const url = linkWhatsAppA(inv.phone, mensajeInvitacion({ invitacion: inv, couple, link }))
+    const w = window.open(url, '_blank')
     setEnviadas((s) => new Set(s).add(inv.id))
-    supabase.from('invitations').update({ sent_at: new Date().toISOString() }).eq('id', inv.id).then(() => {})
+    const guardado = supabase.from('invitations').update({ sent_at: new Date().toISOString() }).eq('id', inv.id)
+    // Si el navegador bloqueó la pestaña nueva, abrimos WhatsApp aquí mismo (después de guardar).
+    guardado.then(() => {
+      if (!w || w.closed) window.location.href = url
+    })
   }
 
   // Envío en cadena: los navegadores no permiten abrir 38 chats de golpe, así que
@@ -123,7 +137,7 @@ export default function Invitaciones({ couple, invitaciones, filtroInicial = 'to
   function enviarActual() {
     if (!actual) return
     if (cola.texto) {
-      window.open(linkWhatsAppA(actual.phone, personalizar(cola.texto, actual)), '_blank')
+      abrirWhatsApp(linkWhatsAppA(actual.phone, personalizar(cola.texto, actual)))
     } else {
       enviar(actual)
     }

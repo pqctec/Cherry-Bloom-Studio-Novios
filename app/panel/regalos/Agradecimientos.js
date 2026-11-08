@@ -17,8 +17,10 @@ export default function Agradecimientos({ aportes, couple }) {
 
   async function agradecer(a) {
     const texto = mensajeAgradecimiento({ nombre: a.guest_name, regalo: a.titulo, couple })
-    window.open(linkWhatsAppA(a.telefono, texto), '_blank')
+    const url = linkWhatsAppA(a.telefono, texto)
+    const w = window.open(url, '_blank')
     await supabase.rpc('marcar_agradecido', { p_contribution_id: a.id })
+    if (!w || w.closed) return (window.location.href = url)
     router.refresh()
   }
 
