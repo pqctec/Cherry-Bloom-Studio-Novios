@@ -35,7 +35,11 @@ function abrirWhatsApp(url) {
   if (!w || w.closed) window.location.href = url
 }
 
-export default function Invitaciones({ couple, invitaciones, filtroInicial = 'todas' }) {
+const TEXTO_GRUPO =
+  '¡Hola {nombre}! 💛 Gracias por confirmar. Creamos un grupo de WhatsApp para compartir avisos del día, el itinerario y luego las fotos. Únanse aquí: {grupo}'
+const ENLACE_GRUPO = /^https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9]+/
+
+export default function Invitaciones({ couple, invitaciones, filtroInicial = 'todas', grupoInicial = '', grupoDisponible = true }) {
   const router = useRouter()
   const supabase = createClient()
   const [modo, setModo] = useState('una')
@@ -51,6 +55,9 @@ export default function Invitaciones({ couple, invitaciones, filtroInicial = 'to
   const [enviadas, setEnviadas] = useState(() => new Set(invitaciones.filter((i) => i.sent_at).map((i) => i.id)))
   const [cola, setCola] = useState(null) // { ids: [...], pos: 0, texto? } mientras envían una tras otra
   const [libre, setLibre] = useState({ abierto: false, destino: 'recibieron', texto: '' })
+  // Grupo de WhatsApp: enlace guardado, texto del mensaje y a quiénes ya se les mandó.
+  const [grupo, setGrupo] = useState({ abierto: false, link: grupoInicial, guardado: grupoInicial, texto: TEXTO_GRUPO, aviso: null })
+  const [enGrupo, setEnGrupo] = useState(() => new Set(invitaciones.filter((i) => i.group_sent_at).map((i) => i.id)))
 
   const totalPases = invitaciones.reduce((s, i) => s + i.passes, 0)
   const confirmadas = invitaciones.filter((i) => i.status === 'confirmado')
@@ -138,6 +145,10 @@ export default function Invitaciones({ couple, invitaciones, filtroInicial = 'to
     if (!actual) return
     if (cola.texto) {
       abrirWhatsApp(linkWhatsAppA(actual.phone, personalizar(cola.texto, actual)))
+      if (cola.grupo) {
+        setEnGrupo((s) => new Set(s).add(actual.id))
+        supabase.from('invitations').update({ group_sent_at: new Date().toISOString() }).eq('id', actual.id).then(() => {})
+      }
     } else {
       enviar(actual)
     }
@@ -150,6 +161,25 @@ export default function Invitaciones({ couple, invitaciones, filtroInicial = 'to
       .replaceAll('{nombre}', inv.name)
       .replaceAll('{pases}', String(inv.passes))
       .replaceAll('{link}', linkInvitacion(couple.slug, inv.code))
+      .replaceAll('{grupo}', grupo.guardado)
+  }
+
+  const confirmados = invitaciones.filter((i) => i.status === 'confirmado')
+  const faltanGrupo = confirmados.filter((i) => !enGrupo.has(i.id))
+  async function guardarGrupo() {
+    const link = grupo.link.trim()
+    if (!ENLACE_GRUPO.test(link)) {
+      return setGrupo((g) => ({ ...g, aviso: { tipo: 'error', texto: 'El enlace debe empezar con https://chat.whatsapp.com/' } }))
+    }
+    const { error: err } = await supabase
+      .from('couple_whatsapp_group')
+      .upsert({ couple_id: couple.id, link, updated_at: new Date().toISOString() }, { onConflict: 'couple_id' })
+    if (err) return setGrupo((g) => ({ ...g, aviso: { tipo: 'error', texto: 'No se pudo guardar el enlace. Intenten de nuevo.' } }))
+    setGrupo((g) => ({ ...g, link, guardado: link, aviso: { tipo: 'ok', texto: 'Enlace guardado.' } }))
+  }
+  function enviarGrupo(lista) {
+    setCola({ ids: lista.map((i) => i.id), pos: 0, texto: grupo.texto, grupo: true })
+    setGrupo((g) => ({ ...g, abierto: false }))
   }
   const recibieron = (i) => enviadas.has(i.id) || i.status !== 'pendiente'
   const DESTINOS = [
@@ -179,7 +209,7 @@ export default function Invitaciones({ couple, invitaciones, filtroInicial = 'to
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-rosa-600">
-                {cola.texto ? 'Enviando mensaje personalizado' : 'Enviando invitaciones'} · {cola.pos + 1} de {cola.ids.length}
+                {cola.grupo ? 'Enviando enlace del grupo' : cola.texto ? 'Enviando mensaje personalizado' : 'Enviando invitaciones'} · {cola.pos + 1} de {cola.ids.length}
               </p>
               <p className="mt-1 font-serif text-2xl font-semibold text-cacao">{actual.name}</p>
               <p className="text-xs text-cacao-500">
@@ -225,6 +255,9 @@ export default function Invitaciones({ couple, invitaciones, filtroInicial = 'to
               )}
               <button onClick={() => setLibre((v) => ({ ...v, abierto: !v.abierto }))} className="btn-claro btn-sm">
                 <Icon name="edit" className="h-4 w-4" /> Mensaje personalizado
+              </button>
+              <button onClick={() => setGrupo((g) => ({ ...g, abierto: !g.abierto }))} className="btn-claro btn-sm">
+                <Icon name="users" className="h-4 w-4" /> Grupo de WhatsApp
               </button>
             </div>
           </div>
@@ -290,6 +323,85 @@ export default function Invitaciones({ couple, invitaciones, filtroInicial = 'to
               >
                 <Icon name="chat" className="h-4 w-4" /> Enviar a {destino[2].length} {destino[2].length === 1 ? 'invitado' : 'invitados'}
               </button>
+            </div>
+          )}
+
+          {grupo.abierto && (
+            <div className="tarjeta space-y-5 p-5">
+              <div>
+                <h2 className="font-serif text-2xl font-semibold">Grupo de WhatsApp de invitados</h2>
+                <p className="text-xs text-cacao-500">
+                  Inviten a los que confirmaron a un grupo para avisos del día, el itinerario y las fotos. Cada invitado decide si se une.
+                </p>
+              </div>
+              {!grupoDisponible ? (
+                <p className="rounded-xl bg-rubor-100 px-4 py-3 text-sm text-terracota-800">
+                  Falta ejecutar la migración 17 en Supabase para usar el grupo de WhatsApp.
+                </p>
+              ) : (
+                <>
+                  <ol className="space-y-1.5 text-sm text-cacao-700">
+                    <li>
+                      <b>1.</b> En WhatsApp creen el grupo (pueden agregarse solo ustedes dos). Recomendado: en <i>Permisos</i>, que solo los
+                      administradores envíen mensajes, y activen <i>Aprobar nuevos participantes</i>.
+                    </li>
+                    <li>
+                      <b>2.</b> Entren a la info del grupo → <i>Invitar mediante enlace</i> → <i>Copiar enlace</i>, y péguenlo aquí:
+                    </li>
+                  </ol>
+                  <div className="flex flex-wrap gap-2">
+                    <input
+                      value={grupo.link}
+                      onChange={(e) => setGrupo((g) => ({ ...g, link: e.target.value, aviso: null }))}
+                      placeholder="https://chat.whatsapp.com/…"
+                      className="campo min-w-0 flex-1"
+                    />
+                    <button type="button" onClick={guardarGrupo} disabled={!grupo.link.trim() || grupo.link.trim() === grupo.guardado} className="btn-claro btn-sm">
+                      Guardar enlace
+                    </button>
+                  </div>
+                  {grupo.aviso && (
+                    <p className={`text-xs ${grupo.aviso.tipo === 'error' ? 'text-terracota-800' : 'text-salvia'}`}>{grupo.aviso.texto}</p>
+                  )}
+
+                  <div>
+                    <p className="etiqueta">
+                      <b>3.</b> Mensaje (<code className="rounded bg-crema px-1">{'{grupo}'}</code> es el enlace y{' '}
+                      <code className="rounded bg-crema px-1">{'{nombre}'}</code> el invitado)
+                    </p>
+                    <textarea rows={4} value={grupo.texto} onChange={(e) => setGrupo((g) => ({ ...g, texto: e.target.value }))} className="campo" />
+                    {grupo.guardado && confirmados[0] && (
+                      <p className="mt-2 whitespace-pre-line rounded-xl bg-crema px-4 py-3 text-xs text-cacao-700">
+                        <b>Así le llega a {confirmados[0].name}:</b>
+                        {'\n'}
+                        {personalizar(grupo.texto, confirmados[0])}
+                      </p>
+                    )}
+                  </div>
+
+                  {confirmados.length === 0 ? (
+                    <p className="text-sm text-cacao-500">Aún nadie confirmó su asistencia.</p>
+                  ) : (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={!grupo.guardado || !grupo.texto.includes('{grupo}') || faltanGrupo.length === 0}
+                        onClick={() => enviarGrupo(faltanGrupo)}
+                        className="btn-primario btn-sm"
+                      >
+                        <Icon name="chat" className="h-4 w-4" />{' '}
+                        {faltanGrupo.length ? `Enviar a los confirmados que faltan (${faltanGrupo.length})` : 'Todos los confirmados ya lo recibieron'}
+                      </button>
+                      {faltanGrupo.length < confirmados.length && (
+                        <button type="button" disabled={!grupo.guardado || !grupo.texto.includes('{grupo}')} onClick={() => enviarGrupo(confirmados)} className="btn-claro btn-sm">
+                          Reenviar a todos ({confirmados.length})
+                        </button>
+                      )}
+                      {!grupo.texto.includes('{grupo}') && <span className="text-xs text-terracota-800">El mensaje debe incluir {'{grupo}'}.</span>}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>
@@ -463,6 +575,7 @@ export default function Invitaciones({ couple, invitaciones, filtroInicial = 'to
                           ✓ Enviada{inv.sent_at ? ` el ${new Date(inv.sent_at).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' })}` : ''}
                         </p>
                       )}
+                      {inv.status === 'confirmado' && enGrupo.has(inv.id) && <p className="mt-1.5 text-[11px] text-salvia">✓ Enlace del grupo enviado</p>}
                       {inv.guest_names && <p className="mt-1.5 text-xs text-cacao-700">{inv.guest_names}</p>}
                       {inv.status === 'pendiente' && inv.reminded_at && (
                         <p className="mt-1.5 text-[11px] text-cacao-500">

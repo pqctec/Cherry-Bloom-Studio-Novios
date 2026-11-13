@@ -5,11 +5,14 @@ import TerminarPaso from '@/components/TerminarPaso'
 
 const COLUMNAS = 'id, code, name, passes, phone, status, attending, guest_names, message, responded_at, created_at, reminded_at'
 
-// Con la migración 15 se lee también sent_at; sin ella, la lista sigue funcionando.
+// Columnas que llegan con migraciones posteriores: si aún no se ejecutaron,
+// la lista sigue funcionando sin ellas.
 async function cargarInvitaciones(supabase, coupleId) {
-  const r = await supabase.from('invitations').select(`${COLUMNAS}, sent_at`).eq('couple_id', coupleId).order('created_at', { ascending: true })
-  if (!r.error) return r
-  return supabase.from('invitations').select(COLUMNAS).eq('couple_id', coupleId).order('created_at', { ascending: true })
+  for (const extra of [', sent_at, group_sent_at', ', sent_at', '']) {
+    const r = await supabase.from('invitations').select(COLUMNAS + extra).eq('couple_id', coupleId).order('created_at', { ascending: true })
+    if (!r.error) return r
+  }
+  return { data: [] }
 }
 
 export default async function InvitadosPage({ searchParams }) {
@@ -25,9 +28,10 @@ export default async function InvitadosPage({ searchParams }) {
     .eq('user_id', user.id)
     .maybeSingle()
 
-  const [{ data: invitaciones }, { count: regalos }] = await Promise.all([
+  const [{ data: invitaciones }, { count: regalos }, grupo] = await Promise.all([
     cargarInvitaciones(supabase, couple.id),
     supabase.from('gift_items').select('id', { count: 'exact', head: true }).eq('couple_id', couple.id),
+    supabase.from('couple_whatsapp_group').select('link').eq('couple_id', couple.id).maybeSingle(),
   ])
 
   return (
@@ -53,7 +57,13 @@ export default async function InvitadosPage({ searchParams }) {
         </div>
       )}
 
-      <Invitaciones couple={couple} invitaciones={invitaciones || []} filtroInicial={filtro || 'todas'} />
+      <Invitaciones
+        couple={couple}
+        invitaciones={invitaciones || []}
+        filtroInicial={filtro || 'todas'}
+        grupoInicial={grupo?.data?.link || ''}
+        grupoDisponible={!grupo?.error}
+      />
 
       <TerminarPaso
         paso="invitaciones"
